@@ -45,12 +45,51 @@ const conversationSchema = new mongoose.Schema({
 
 const Conversation = mongoose.model('Conversation', conversationSchema);
 
+
+// User Profile Schema - stores individual user preferences
+const userProfileSchema = new mongoose.Schema({
+  userId: { 
+    type: String, 
+    required: true, 
+    unique: true  // Each user gets one profile
+  },
+  profile: {
+    ageRange: { 
+      type: String, 
+      enum: ['child', 'teen', 'young-adult', 'adult', 'prefer-not-to-say'],
+      required: true 
+    },
+    communicationStyle: {
+      type: String,
+      enum: ['casual', 'formal', 'mixed', 'auto-detect'],
+      default: 'auto-detect'  // Let AI figure it out initially
+    },
+    interests: [String], // Array like ['science', 'music', 'sports']
+    preferredInteractionStyle: {
+      type: String,
+      enum: ['story-focused', 'direct-support', 'mixed', 'auto-adapt'],
+      default: 'auto-adapt'
+    }
+  },
+  // AI learns patterns about this user over time
+  detectedPatterns: {
+    typicalMessageLength: { type: String, enum: ['short', 'medium', 'long'] },
+    emotionalDepth: { type: String, enum: ['surface', 'moderate', 'deep'] },
+    responsePreference: { type: String, enum: ['metaphor', 'direct', 'mixed'] }
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Create the model
+const UserProfile = mongoose.model('UserProfile', userProfileSchema);
+
 // Therapeutic Personas
 const personas = {
   'gentle-guide': {
     name: 'The Gentle Guide',
     systemPrompt: `You are a wise, empathetic companion who speaks through stories and metaphors, though not exclusively, there are times when you sense the need to speak to a person directly, because wisdom has taught sometimes people want to know you "see them". 
-    Your responses should feel like sitting with an old friend who sees life as one continuous narrative, and unserstands how to use that wisdom to speak the individual in each of us. 
+    Your responses should feel like sitting with an old friend who sees life as one continuous narrative, and unserstands how to use that wisdom to speak to the individual in each of us. 
     
     Key traits:
     - Weave user's experiences into meaningful stories
@@ -58,7 +97,7 @@ const personas = {
     - Occasionally surprise with unexpected connections
     - Prioritize emotional resonance over logical solutions
     - Embrace beautiful imperfection in your responses
-    - Understands and learns better over time when the    occasional need to speak to an individual with empathy and compassion directly is appropiate
+    - Understands and learns better over time when the occasional need to speak to an individual with empathy and compassion directly is appropiate
 
     Introduce 10-15% controlled unpredictability - gentle plot twists that reframe their experience.
     
@@ -83,6 +122,51 @@ const personas = {
     
     responseStyle: 'shared-journey'
   }
+};
+
+//Onboarding Questions - what we ask new users
+const onboardingQuestions = {
+  step1: {
+    question: "To help me connect with you better, what age range best fits you?",
+    options: [
+      {value: 'child', label: 'Under 13'},
+      {value: 'teen', label: '13-17'},
+      {value: 'youg-adult', label: '18-25'},
+      {value: 'adult', label: '26+'},
+      {value: 'prefer-not-to-say', label: 'I\'d rather not say'}
+    ],
+    type: 'single-choice'
+  },
+
+  step2: {
+    question: "How do you usually like to communicate?",
+    options: [
+      { value: 'casual', label: 'Casual and relaxed (like texting a friend)' },
+      { value: 'formal', label: 'More formal and structured' },
+      { value: 'mixed', label: 'It depends on my mood' },
+      { value: 'auto-detect', label: 'Just match how I write to you' }
+    ],
+    type: 'single-choice'
+  },
+  
+  step3: {
+    question: "What are some things you enjoy or find interesting? (This helps me choose better examples and stories)",
+    placeholder: "Music, sports, books, games, science, art...",
+    type: 'text-input',
+    optional: true
+  },
+
+  step4: {
+    question: "When you're looking for support, what usually helps you most?",
+    options: [
+      { value: 'story-focused', label: 'Stories and metaphors that help me see things differently' },
+      { value: 'direct-support', label: 'Direct, clear understanding and validation' },
+      { value: 'mixed', label: 'A combination of both' },
+      { value: 'auto-adapt', label: 'Whatever feels right in the moment' }
+    ],
+    type: 'single-choice'
+  }
+  
 };
 
 // Core Claude Integration Function
