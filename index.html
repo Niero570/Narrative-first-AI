@@ -3,71 +3,385 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Gentle Guide Beta</title>
+    <!-- Add Google Fonts for warmth -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            background: #f5f5f5;
-            font-family: sans-serif;
+            /* Softer, calming gradient */
+            background: linear-gradient(120deg, #fbc2a9 0%, #f7b2d9 40%, #a1c4fd 100%);
+            font-family: 'Quicksand', 'Nunito', 'Segoe UI', 'Arial', sans-serif;
+            min-height: 100vh;
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 50px;
+            justify-content: flex-start;
+            overflow-x: hidden;
+            transition: background 0.8s;
         }
-        h1 { 
-            color: #333;
+        .floaty {
+            position: absolute;
+            opacity: 0.22; /* clearer against background */
+            animation: float 18s ease-in-out infinite;
+            filter: blur(0.6px); /* slightly softened but not fuzzy */
+            transition: opacity 0.35s, transform 0.35s;
+            box-shadow: 0 10px 30px rgba(16,24,40,0.12);
+            border: 1px solid rgba(255,255,255,0.06);
+            mix-blend-mode: normal;
+        }
+        /* higher-contrast, richer gradients for floaties */
+        .floaty1 { width: 140px; height: 140px; background: linear-gradient(135deg,#2a3d66 0%,#4a6fb3 100%); border-radius: 60% 40% 50% 70%/60% 50% 40% 70%; top: 8%; left: 6%; animation-delay: 0s; opacity:0.18;}
+        .floaty2 { width: 90px; height: 70px; background: linear-gradient(135deg,#0ea5a4 0%,#7dd3fc 100%); border-radius: 50% 60% 60% 50%/60% 50% 60% 50%; top: 65%; left: 80%; animation-delay: 2s; opacity:0.24;}
+        .floaty3 { width: 120px; height: 100px; background: linear-gradient(135deg,#ff6b6b 0%,#ff9a9e 100%); border-radius: 70% 40% 60% 50%/60% 70% 50% 60%; top: 40%; left: 50%; animation-delay: 4s; opacity:0.22;}
+        .floaty4 { width: 180px; height: 60px; background: linear-gradient(135deg,#6d28d9 0%,#a78bfa 100%); border-radius: 50% 50% 60% 40%/60% 50% 60% 50%; top: 80%; left: 10%; animation-delay: 6s; opacity:0.20;}
+        .floaty5 { width: 60px; height: 60px; background: linear-gradient(135deg,#f59e0b 0%,#fb923c 100%); border-radius: 50%; top: 20%; left: 85%; animation-delay: 8s; opacity:0.26;}
+        .floaty6 { width: 100px; height: 100px; background: linear-gradient(135deg,#16a34a 0%,#34d399 100%); border-radius: 60% 40% 70% 30%/60% 50% 60% 50%; top: 55%; left: 25%; animation-delay: 10s; opacity:0.2;}
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); }
+            25% { transform: translateY(-18px) rotate(-2deg) scale(1.03); }
+            50% { transform: translateY(-40px) scale(1.07); }
+            75% { transform: translateY(-18px) rotate(2deg) scale(1.03); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        /* subtle interactive lift */
+        .floaty:hover { opacity: 0.95; transform: translateY(-6px) scale(1.03); box-shadow: 0 18px 40px rgba(16,24,40,0.18); }
+        #onboarding-modal {
+            background: rgba(194, 105, 67, 0.97);
+            border-radius: 32px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+            padding: 64px 32px;
+            max-width: 400px;
+            margin-top: 80px;
+            text-align: center;
+            z-index: 2;
+            color: #fff8f2;
+            font-family: 'Nunito', sans-serif;
+            transition: box-shadow 0.3s;
+        }
+        h1 {
+            color: #f77e53;
+            margin-top: 60px;
+            font-size: 2.4em;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px #fff2;
+            font-family: 'Quicksand', sans-serif;
         }
         #chat {
-            width: 100%;
+            background: rgba(255,255,255,0.85);
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+            padding: 32px;
             max-width: 500px;
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        textarea {
             width: 100%;
-            height: 80px;
+            margin-top: 32px;
+            display: none;
+            z-index: 2;
+            backdrop-filter: blur(3px);
+            transition: box-shadow 0.3s;
+        }
+        label, select, input, button, textarea {
+            font-size: 1em;
+            margin: 12px 0;
+            font-family: 'Nunito', 'Quicksand', sans-serif;
+        }
+        select, input, textarea {
+            width: 80%;
             padding: 10px;
-            border-radius: 4px;
+            border-radius: 8px;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 10px;
+            background: #f9f9fc;
+            transition: border 0.2s;
+        }
+        select:focus, input:focus, textarea:focus {
+            border: 1.5px solid #a1c4fd;
+            outline: none;
         }
         button {
-            background: #4CAF50;
+            background: linear-gradient(90deg, #6a4e77 60%, #a1c4fd 100%);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+            padding: 12px 32px;
+            border-radius: 8px;
             cursor: pointer;
+            margin-top: 16px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px #0001;
+            transition: background 0.2s, box-shadow 0.2s;
         }
-        #response {
-            margin-top: 20px;
-            white-space: pre-wrap;
-            color: #555;
+        button:hover, button:focus {
+            background: linear-gradient(90deg, #8c6fa3 60%, #f7b2d9 100%);
+            box-shadow: 0 4px 16px #a1c4fd44;
+        }
+        #persona-switch {
+            margin: 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        #persona {
+            border: 1px solid #a1c4fd;
+            background: #f7faff;
+            border-radius: 8px;
+            padding: 8px;
+            font-weight: 600;
+        }
+        #mood-indicator {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+            font-family: 'Quicksand', sans-serif;
+            color: #6a4e77;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #history {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        textarea#message {
+            min-height: 48px;
+            resize: vertical;
+            margin-top: 12px;
+        }
+        .chat-bubble {
+            max-width: 80%;
+            margin: 8px 0;
+            padding: 14px 18px;
+            border-radius: 16px;
+            background: #e7f3e7;
+            word-break: break-word;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.05em;
+            box-shadow: 0 2px 8px #0001;
+            opacity: 0;
+            animation: bubbleIn 0.5s forwards;
+        }
+        @keyframes bubbleIn {
+            from { opacity: 0; transform: translateY(10px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .user { background: #d0e6ff; align-self: flex-end; }
+        .assistant { background: #f9e6ff; align-self: flex-start; }
+        #feedback { margin-top: 10px; }
+        #feedback button {
+            padding: 6px 16px;
+            font-size: 1.2em;
+            border-radius: 50%;
+            background: #fbc2a9;
+            color: #6a4e77;
+            margin: 0 4px;
+            box-shadow: none;
+        }
+        #feedback button:hover {
+            background: #a1c4fd;
+            color: #fff;
+        }
+        /* Responsive design */
+        @media (max-width: 600px) {
+            #onboarding-modal, #chat {
+                max-width: 98vw;
+                padding: 24px 8px;
+            }
+            h1 { font-size: 1.5em; margin-top: 24px;}
         }
     </style>
 </head>
 <body>
+    <div class="floaty floaty1"></div>
+    <div class="floaty floaty2"></div>
+    <div class="floaty floaty3"></div>
+    <div class="floaty floaty4"></div>
+    <div class="floaty floaty5"></div>
+    <div class="floaty floaty6"></div>
     <h1>Gentle Guide</h1>
-    <div id="chat">
-        <textarea name="Share your thoughts..." id="message"></textarea>
-        <button onClick="sendMessage()">Send</button>
-        <div id="response"></div>
+    <div id="onboarding-modal" style="display:none;">
+        <h2>Welcome!</h2>
+        <div id="onboarding-step"></div>
+        <button id="onboarding-next" type="button">Next</button>
     </div>
-
+    <div id="chat" style="display:block;">
+        <div id="persona-switch">
+            <label for="persona">Persona:</label>
+            <select id="persona" onchange="switchPersona()">
+                <option value="gentle-guide">🧙 Gentle Guide</option>
+                <option value="fellow-traveler">🧑‍🤝‍🧑 Fellow Traveler</option>
+            </select>
+        </div>
+        <div id="mood-indicator"></div>
+        <div id="history"></div>
+        <textarea id="message" placeholder="Share your thoughts..."></textarea>
+        <button onClick="sendMessage()">Send</button>
+        <div id="feedback"></div>
+    </div>
     <script>
+        // Server-driven onboarding variables
+        let onboardingComplete = false;
+        let chatHistory = [];
+        let persona = 'gentle-guide';
+        let onboardingInProgress = false;
+        let serverOnboardingStep = null;
+        let originalPendingMessage = null;
+
+        function renderServerOnboarding(questionObj) {
+            const stepDiv = document.getElementById('onboarding-step');
+            stepDiv.innerHTML = '';
+            if (!questionObj) return;
+            if (questionObj.type === 'single-choice') {
+                stepDiv.innerHTML = `<label>${questionObj.question}</label><br>
+                    <select id="onboarding-input">
+                        ${questionObj.options.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('')}
+                    </select>`;
+            } else {
+                stepDiv.innerHTML = `<label>${questionObj.question}</label><br>
+                    <input id="onboarding-input" placeholder="${questionObj.placeholder || ''}"/>`;
+            }
+            document.getElementById('onboarding-next').style.display = 'inline-block';
+            document.getElementById('onboarding-modal').style.display = 'block';
+        }
+
+        async function submitOnboarding() {
+            const val = document.getElementById('onboarding-input')?.value;
+            if (!val) return;
+            try {
+                const res = await fetch('http://localhost:3001/api/onboarding', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ userId: 'demo-user', step: serverOnboardingStep, response: val })
+                });
+                const data = await res.json();
+                if (data.nextQuestion) {
+                    serverOnboardingStep = data.nextStep;
+                    renderServerOnboarding(data.nextQuestion);
+                } else if (data.completed) {
+                    onboardingInProgress = false;
+                    onboardingComplete = true;
+                    document.getElementById('onboarding-modal').style.display = 'none';
+                    // auto-send the original pending message if present
+                    if (originalPendingMessage) {
+                        const msg = originalPendingMessage;
+                        originalPendingMessage = null;
+                        await sendMessageWithText(msg);
+                    }
+                }
+            } catch (err) {
+                console.error('Onboarding submit error:', err);
+            }
+        }
+
+        // Compatibility wrapper: HTML still referenced nextOnboarding() in some places.
+        // Keep this so the inline onclick or older code won't throw "nextOnboarding is not defined".
+        function nextOnboarding() {
+            // forward to the server-driven submit function
+            return submitOnboarding();
+        }
+
+        // wire the onboarding-next button to server submit
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('onboarding-next');
+            if (btn) {
+                btn.onclick = submitOnboarding;
+            }
+        });
+
         async function sendMessage() {
             const message = document.getElementById('message').value;
-            const response = await fetch('http://localhost: 3000/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: message})
+            if (!message.trim()) return;
+            // show user immediately
+            chatHistory.push({role: 'user', content: message});
+            renderHistory();
+            document.getElementById('message').value = '';
+            document.getElementById('mood-indicator').innerHTML = '⏳ ...thinking...';
+            await sendMessageToServer(message);
+        }
+
+        async function sendMessageWithText(message) {
+            // helper to resend programmatically (doesn't add duplicate user bubble)
+            document.getElementById('mood-indicator').innerHTML = '⏳ ...thinking...';
+            await sendMessageToServer(message);
+        }
+
+        async function sendMessageToServer(message) {
+            try {
+                console.log('Sending chat request:', {message, persona, userId: 'demo-user'});
+                const response = await fetch('http://localhost:3001/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message, persona, userId: 'demo-user'})
+                });
+                console.log('Raw response:', response);
+                if (!response.ok) {
+                    console.error('Server error:', response.status, response.statusText);
+                    throw new Error('Server error: ' + response.status);
+                }
+                const text = await response.text();
+                console.log('Response text:', text);
+                const data = JSON.parse(text);
+
+                // If server asks for onboarding, show server-driven modal
+                if (data.needsOnboarding) {
+                    onboardingInProgress = true;
+                    serverOnboardingStep = data.onboardingStep || 1;
+                    originalPendingMessage = message;
+                    renderServerOnboarding(data.question);
+                    return;
+                }
+
+                if (!data || !data.response) {
+                    throw new Error(data?.error || 'No response from server');
+                }
+
+                chatHistory.push({role: 'assistant', content: data.response});
+                renderHistory();
+
+                const moodEmoji = {
+                    neutral: '😐',
+                    sad: '😢',
+                    anxious: '😰',
+                    angry: '😠',
+                    hopeful: '😊',
+                    confused: '🤔'
+                };
+                const mood = data.emotionalState?.mood || 'neutral';
+                document.getElementById('mood-indicator').innerHTML = `<span>${moodEmoji[mood] || '😐'} Mood: ${mood.charAt(0).toUpperCase() + mood.slice(1)}</span>`;
+                showFeedback();
+            } catch (err) {
+                console.error('Chat error:', err);
+                document.getElementById('mood-indicator').innerHTML = '⚠️ Error: ' + err.message;
+                chatHistory.push({role: 'assistant', content: 'Sorry, something went wrong. Please try again later.'});
+                renderHistory();
+            }
+        }
+
+        function renderHistory() {
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = '';
+            chatHistory.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = 'chat-bubble ' + (msg.role === 'user' ? 'user' : 'assistant');
+                bubble.innerText = msg.content;
+                historyDiv.appendChild(bubble);
             });
-            const data = await response.json();
-            document.getElementById('response').innerText = data.response;
+        }
+
+        function showFeedback() {
+            document.getElementById('feedback').innerHTML = `
+                <span>Did this help?</span>
+                <button onclick="sendFeedback('yes')">👍</button>
+                <button onclick="sendFeedback('no')">👎</button>
+            `;
+        }
+
+        async function sendFeedback(val) {
+            // Send feedback to server (implement endpoint)
+            document.getElementById('feedback').innerText = 'Thank you for your feedback!';
+        }
+
+        function switchPersona() {
+            persona = document.getElementById('persona').value;
+            // Optionally notify server about persona change
         }
     </script>
-    
 </body>
 </html>

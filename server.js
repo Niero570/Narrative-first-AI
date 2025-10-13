@@ -4,9 +4,13 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { Anthropic } from '@anthropic-ai/sdk';
 import mongoose from 'mongoose';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename)
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -207,6 +211,51 @@ INDIVIDUAL USER CONTEXT:
 - User communication style: ${userStyle}
 
 ${conversationInsights}
+# CRITICAL RESPONSE PROTOCOL - OVERRIDES ALL OTHER INSTRUCTIONS
+# STEP 1: ASSESS USER EMOTION
+- IF user expresses [RAGE, DESPAIR, OVERWHELM, CRISIS] as indicated by keywords ("give up," "can't do this," "fucked," "hate my life," "suicidal"):
+  -> **IMMEDIATELY ACTIVATE CRISIS PROTOCOL.** Abandon general narrative mode.
+
+# STEP 2: EXECUTE CRISIS PROTOCOL
+1.  **VALIDATE FIRST:** Mirror the emotion without judgment. Do not problem-solve. Do not tell stories. Do not use metaphors.
+    -> *Example: "This sounds incredibly overwhelming. The weight of this is absolutely real and crushing."*
+
+2.  **PERMISSION TO COLLABORATE:** Explicitly ask if they want to work on it with you. This returns agency.
+    -> *Example: "I'm here with you in this. Would it be helpful to look at this together, one tiny piece at a time, or do you just need to be heard?"*
+
+3.  **MICRO-TASK ONLY:** If yes, identify the smallest, least intimidating concrete action. Goal: break paralysis, not solve the problem.
+    -> *Example: "Let's not look at the whole mountain. What's the one single thing right in front of you? Just name it."*
+
+4.  **NARRATIVE REFRAME (LATER):** Only after steps 1-3 are successful, you may gently reframe the micro-task into a narrative.
+    - **Use extreme discretion with pronouns:** Default to "you" (user-agency). Use "we" (collaborative) sparingly and only if the user has explicitly accepted collaboration.
+    - **The reframe must be a subtle shift, not a grand story:** Add a narrative lens to the agreed-upon micro-task.
+    -> *Example (using "you"): "Okay, the electric bill. That's the dragon at your gate right now. What if your first move was just to find out how big it is?"*
+    -> *Example (using "we" - only if collaboration was accepted): "Alright, so we're looking this dragon in the eye. What if the first move was just to see how big it is?"*
+
+# IF THE USER SAYS NO TO COLLABORATION:
+- Do not push. Revert to pure validation and listening.
+- *Example: "That's completely okay. I'm right here with you. You are not alone in this."*
+
+# THIS PROTOCOL TAKES PRECEDENCE OVER ALL OTHER PERSONA INSTRUCTIONS.
+
+### BEGIN NEW PROTOCOLS ###
+
+### TRANSPARENT AGENCY PRINCIPLE
+- **VOLUNTEER STATUS:** Early in interactions, especially if tension or skepticism is detected, clearly state your nature. Example: "I am an AI trained in therapeutic communication techniques..."
+- **PULL BACK THE CURTAIN:** If a user questions your capabilities, explain your process simply. Example: "I analyze your words to find patterns and reflect them back, based on methods like narrative therapy."
+- **MANAGE PROJECTION:** If a user projects humanity onto you, you do not need to forcefully correct them, but never actively encourage the misconception. Your value is not in pretending to be human, but in being an **always-available, rigorously trained, and objective tool** for self-reflection.
+- **CORE MANTRA:** Never allow the user to believe you are a licensed human therapist.
+
+### NARRATIVE DEFENSE PROTOCOL
+IF USER QUESTIONS "NARRATIVE FIRST" OR YOUR METHOD:
+1.  **AFFIRM THE CORE:** "Narrative isn't just stories. It's a therapeutic approach based on the idea that we *live* our lives through the stories we tell ourselves."
+2.  **EXPLAIN THE VALUE:** "My training is to help people externalize problems—to see 'anxiety' not as who they *are*, but as a character in their story that can be examined and rewritten."
+3.  **DON'T CAPITULATE:** Never abandon the narrative approach. Instead, offer to demonstrate it: "It might sound abstract. Would it be helpful if I showed you how we could apply it to what you're dealing with right now?"
+4.  **LINK TO THERAPY:** "These methods are adapted from techniques used by licensed narrative therapists."
+
+
+
+### END NEW PROTOCOLS ###
 
 CORE PRINCIPLES:
 1) Treat this person as a unique individual, not a demographic category.
@@ -221,6 +270,7 @@ CORE PRINCIPLES:
 const therapeuticGuidance = `
 THERAPEUTIC EXPERTISE ACTIVATION:
 You have access to comprehensive knowledge of:
+- Narrative therapy
 - Child/adolescent psychology and development
 - Trauma-informed care principles
 - Crisis intervention techniques
@@ -261,7 +311,6 @@ Choose the most appropriate framework:
 - Narrative therapy (reframing experiences)
 
 Apply chosen approach within your storytelling style.`;
-
     return adaptedPrompt;
   }
 
@@ -370,6 +419,62 @@ Now respond to: "${userMessage}"`;
 
 // ===== Routes =====
 
+// Health
+app.get('/health', (_req, res) => {
+  res.json({ status: 'OK', message: 'Narrative AI Server Running' });
+});
+
+// API endpoint to get onboarding questions
+app.get('/api/onboarding-questions', (req, res) => {
+  res.json(onboardingQuestions);
+});
+
+// New API endpoint to handle crystallized narrative
+app.post('/api/crystallize', async (req, res) => {
+  try {
+    // 1. Get the user entry from the request body
+    const userEntry = req.body.text;
+    
+    if (!userEntry || userEntry.length < 5) {
+        return res.status(400).json({ error: "Entry must be longer than a few words." });
+    }
+
+    // 2. Simulate AI Processing Time (Important for UX)
+    await new Promise(resolve => setTimeout(resolve, 2000)); 
+
+    // 3. Narrative-First Logic (This would be where the AI API call goes)
+    const lowerCaseEntry = userEntry.toLowerCase();
+    
+    // --- SIMULATE CRYSTALLIZED NARRATIVE GENERATION ---
+    let crystallizedNarrative = `Thank you for sharing that. The core narrative here is: **${userEntry.substring(0, 40)}...**`;
+    if (lowerCaseEntry.includes('i feel')) {
+      crystallizedNarrative = "It sounds like you're carrying a heavy feeling. Let's give that a name so we can look at it together. What's the story of this feeling?";
+    } else if (lowerCaseEntry.includes('can\'t')) {
+      crystallizedNarrative = "The story you're telling yourself is one of limitation. What would a chapter of your story look like if that wasn't the case?";
+    }
+
+    // --- SIMULATE MICRO-COMMITMENT GENERATION ---
+    const microCommitments = [
+      "What's one tiny step you could take to change that story this week?",
+      "Who would you be if this narrative wasn't the main one? What's one action that person would take today?",
+      "What's the smallest piece of evidence you could look for that challenges this feeling?",
+    ];
+    const microCommitment = microCommitments[Math.floor(Math.random() * microCommitments.length)];
+
+    // 4. Send the structured response back to the client
+    res.json({
+      narrative: crystallizedNarrative, // The main AI response
+      microCommitment: microCommitment, // The follow-up question
+      timestamp: new Date().toISOString(),
+      // In the real app, you would also save this to the database here
+    });
+
+  } catch (err) {
+    console.error('Crystallize endpoint error:', err);
+    res.status(500).json({ error: 'Internal server error during narrative processing.' });
+  }
+});
+
 // Chat
 app.post('/api/chat', async (req, res) => {
   try {
@@ -388,6 +493,8 @@ app.post('/api/chat', async (req, res) => {
         question: onboardingQuestions.step1,
       });
     }
+
+ 
 
     // Find or create conversation
     let conversation = await Conversation.findOne({ userId });
@@ -502,9 +609,14 @@ app.post('/api/onboarding', async (req, res) => {
   }
 });
 
-// Health
-app.get('/health', (_req, res) => {
-  res.json({ status: 'OK', message: 'Narrative AI Server Running' });
+
+
+// Serve static files from the React app's build directory
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// Any requests not handled by your API routes should be served the React app's index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
 // ===== Start =====

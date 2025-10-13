@@ -1,0 +1,199 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f7f3e9; /* Soft cream background */
+  color: #333;
+}
+
+.App {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Onboarding Styles */
+.onboarding-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #f7f3e9;
+}
+
+.onboarding-card {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+  text-align: center;
+}
+
+.onboarding-card h2 {
+  font-size: 2.5em;
+  font-weight: 300;
+  color: #444;
+}
+
+.onboarding-card p {
+  font-size: 1.1em;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.onboarding-card input,
+.onboarding-card button {
+  width: 100%;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1em;
+}
+
+.onboarding-card button {
+  background-color: #5a7d7d;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.onboarding-card button:hover {
+  background-color: #4a6a6a;
+}
+
+/* Additions for multi-step onboarding */
+.onboarding-card button {
+  display: block;
+  margin: 15px auto;
+  width: 80%;
+}
+
+/* Main UI Styles */
+.main-ui-container {
+  display: flex;
+  height: 90vh;
+  width: 90vw;
+  max-width: 1200px;
+  background-color: #fff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.left-panel {
+  flex: 0 0 300px;
+  background-color: #f0f0f0;
+  padding: 30px;
+  border-right: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+}
+
+.right-panel {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px;
+}
+
+.narrative-display {
+  flex-grow: 1;
+  overflow-y: auto;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  font-family: 'Georgia', serif; /* A more personal, diary-like font */
+  font-size: 1.1em;
+}
+
+.microphone-button {
+  border: none;
+  background-color: #5a7d7d;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  margin-top: 20px;
+  align-self: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.microphone-button:hover {
+  transform: scale(1.05);
+}
+
+.mic-icon {
+  width: 40px;
+  height: 40px;
+  filter: invert(1);
+}
+
+.narrative-content .Typewriter__cursor {
+  font-size: 1.5em;
+  color: #333;
+}
+
+/* Session History Styles */
+.session-history {
+  flex-grow: 1;
+}
+
+.history-header {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.history-item {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.history-item:hover {
+  background-color: #e8e8e8;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-date {
+  font-weight: bold;
+  color: #5a7d7d;
+  display: block;
+}
+
+.history-summary {
+  color: #777;
+  font-size: 0.9em;
+  margin-top: 5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
