@@ -5,6 +5,8 @@ import SessionHistory from './SessionHistory';
 // Ensure these paths are correct:
 import SpeechRecognitionService from '../services/SpeechRecognitionService';
 import NarrativeSimulator from '../services/NarrativeSimulator';
+import ChatWindow from './ChatWindow';
+
 
 const MainUI = () => {
   const [narrativeText, setNarrativeText] = useState("Welcome to your diary. Tap the microphone to begin.");
@@ -68,6 +70,9 @@ const MainUI = () => {
 
   return (
     <div className="main-ui-container">
+      {/* ADD CHATWINDOW HERE - above your existing layout */}
+      <ChatWindow />
+      
       <div className="left-panel">
         <SessionHistory entries={sessionHistory} />
       </div>
@@ -84,6 +89,6 @@ const MainUI = () => {
       </div>
     </div>
   );
-};
+};  // <-- ADD THIS CLOSING BRACE
 
 export default MainUI;
