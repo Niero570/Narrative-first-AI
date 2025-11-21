@@ -6,7 +6,34 @@ function ChatWindow() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState('gentle-guide');
 
-  const sendMessage = async () => {
+  const saveToDiary = async () => {
+    try {
+      // Get the last 10 messages from the conversation
+      const conversationText = messages
+        .slice(-10) // Last 10 messages
+        .map(msg => `${msg.role}: ${msg.content}`)
+        .join('\n\n');
+  
+      // Call your crystallize endpoint
+      const response = await fetch('http://localhost:3001/api/crystallize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: conversationText })
+      });
+  
+      const data = await response.json();
+      
+      // For now, just alert the crystallized narrative
+      // Later we'll make this prettier
+      alert(`Diary Entry:\n\n${data.narrative}\n\n${data.microCommitment}`);
+      
+    } catch (error) {
+      console.error('Error saving to diary:', error);
+      alert('Could not save to diary');
+    }
+  };
+
+    const sendMessage = async () => {
     if (!inputText.trim()) return;
 
     // Add user message to chat
@@ -23,7 +50,7 @@ function ChatWindow() {
         body: JSON.stringify({
           message: inputText,
           persona: selectedPersona,
-          userId: 'demo-user'
+          userId: 'test-teen-1'
         })
       });
 
@@ -120,7 +147,7 @@ function ChatWindow() {
           cursor: 'pointer',
           width: '100%'
         }}
-        onClick={() => alert('This will open the diary! Coming soon...')}
+        onClick={saveToDiary}
       >
         💾 Save to Diary
       </button>

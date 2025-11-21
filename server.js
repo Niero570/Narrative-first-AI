@@ -22,7 +22,7 @@ app.use(express.json());
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
-const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20240620'; // keep configurable
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514'; // keep configurable
 
 // ===== MongoDB =====
 mongoose
@@ -484,18 +484,35 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'Message and userId are required' });
     }
 
-    // Ensure onboarding complete
-    let userProfile = await UserProfile.findOne({ userId }).lean();
-    if (!userProfile) {
-      return res.status(200).json({
-        needsOnboarding: true,
-        onboardingStep: 1,
-        question: onboardingQuestions.step1,
-      });
+   // Ensure onboarding complete
+let userProfile = await UserProfile.findOne({ userId }).lean();
+if (!userProfile) {
+  // TEMPORARY: Create a basic profile for demo users
+  userProfile = {
+    userId,
+    profile: {
+      ageRange: 'young-adult',
+      communicationStyle: 'casual',
+      interests: ['general'],
+      preferredInteractionStyle: 'auto-adapt',
     }
-
+  };
+  // Optionally save it to DB so this only happens once
+  await UserProfile.create(userProfile);
+}
  
+      /*{
+        return res.status(200).json({
+          needsOnboarding: true,
+          onboardingStep: 1,
+          question: onboardingQuestions.step1,
+        });
+      }*/
 
+
+
+
+        
     // Find or create conversation
     let conversation = await Conversation.findOne({ userId });
     if (!conversation) {
