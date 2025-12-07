@@ -5,43 +5,17 @@ function ChatWindow() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState('gentle-guide');
+  const [diaryEntries, setDiaryEntries] = useState([]);
 
-  const saveToDiary = async () => {
-    try {
-      // Get the last 10 messages from the conversation
-      const conversationText = messages
-        .slice(-10) // Last 10 messages
-        .map(msg => `${msg.role}: ${msg.content}`)
-        .join('\n\n');
-  
-      // Call your crystallize endpoint
-      const response = await fetch('http://localhost:3001/api/crystallize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: conversationText })
-      });
-  
-      const data = await response.json();
-      
-      // For now, just alert the crystallized narrative
-      // Later we'll make this prettier
-      alert(`Diary Entry:\n\n${data.narrative}\n\n${data.microCommitment}`);
-      
-    } catch (error) {
-      console.error('Error saving to diary:', error);
-      alert('Could not save to diary');
-    }
-  };
-
-    const sendMessage = async () => {
+  const sendMessage = async () => {
     if (!inputText.trim()) return;
-
+  
     // Add user message to chat
     const userMessage = { role: 'user', content: inputText };
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
-
+  
     try {
       // Call your backend API
       const response = await fetch('http://localhost:3001/api/chat', {
@@ -53,16 +27,58 @@ function ChatWindow() {
           userId: 'test-teen-1'
         })
       });
-
+  
       const data = await response.json();
       
       // Add AI response to chat
-      const aiMessage = { role: 'assistant', content: data.message || data.response };
+      const aiMessage = { role: 'assistant', content: data.response || data.message };
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const saveToDiary = async () => {
+    console.log('🔵 Save to Diary clicked');
+    console.log('🔵 Messages:', messages);
+    
+    try {
+      // Get the last 10 messages from the conversation
+      const conversationText = messages
+        .slice(-10)
+        .map(msg => `${msg.role}: ${msg.content}`)
+        .join('\n\n');
+      
+      console.log('🔵 Conversation text:', conversationText);
+    
+      // Call your crystallize endpoint
+      const response = await fetch('http://localhost:3001/api/crystallize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: conversationText })
+      });
+      
+      console.log('🔵 Response status:', response.status);
+    
+      const data = await response.json();
+      
+      console.log('🔵 Data received:', data);
+      
+      // Add to diary entries
+      setDiaryEntries(prev => {
+        const newEntries = [...prev, {
+          narrative: data.narrative,
+          microCommitment: data.microCommitment,
+          timestamp: new Date().toISOString()
+        }];
+        console.log('🔵 New diary entries:', newEntries);
+        return newEntries;
+      });
+      
+    } catch (error) {
+      console.error('🔴 Error saving to diary:', error);
     }
   };
 
@@ -151,7 +167,40 @@ function ChatWindow() {
       >
         💾 Save to Diary
       </button>
+
+      {/* Diary Entries Display */}
+{diaryEntries.length > 0 && (
+  <div style={{ 
+    marginTop: '30px', 
+    padding: '20px', 
+    background: '#f5f5f5',
+    borderRadius: '8px'
+  }}>
+    <h3>Diary Entries</h3>
+    {diaryEntries.map((entry, idx) => (
+      <div key={idx} style={{
+        marginBottom: '20px',
+        padding: '15px',
+        background: 'white',
+        borderRadius: '5px',
+        borderLeft: '4px solid #4A9B8E'
+      }}>
+        <p style={{ fontSize: '12px', color: '#666' }}>
+          {new Date(entry.timestamp).toLocaleString()}
+        </p>
+        <p style={{ marginTop: '10px' }}>
+          <strong>Narrative:</strong> {entry.narrative}
+        </p>
+        <p style={{ marginTop: '10px' }}>
+          <strong>Reflection:</strong> {entry.microCommitment}
+        </p>
+      </div>
+    ))}
+  </div>
+)}
     </div>
+
+    
   );
 }
 
