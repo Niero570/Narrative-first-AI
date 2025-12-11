@@ -1,6 +1,6 @@
 # NarrativeFirst AI - Therapeutic AI Companion
 
-> **Healing through stories, not clinical responses.**
+> **Healing through narrrative clairity and reflction, not clinical responses.**
 
 A narrative-first AI companion designed for vulnerable populations (neurodivergent individuals, trauma survivors, anxiety/depression) that uses storytelling and metaphor instead of generic therapeutic responses.
 
@@ -18,8 +18,15 @@ A narrative-first AI companion designed for vulnerable populations (neurodiverge
 **NarrativeFirst AI** doesn't just validate feelings—it transforms them into meaningful narratives that help users see their experiences differently.
 
 ### **Example:**
-- **Generic AI:** "I understand you feel invisible."
-- **NarrativeFirst:** *Tells story about Japanese kintsugi pottery—how broken pieces become more beautiful when mended with gold.*
+- 
+ Response to "Nobody at school talks to me anymore":
+**Generic AI:**  "I'm sorry you're feeling lonely. Have you tried joining any clubs or activities? Sometimes making the first move helps."
+River (**NarrativeFirst**) Response:
+- "That silence between you and the people who used to fill your days... it's heavy, isn't it? Like you're watching life happen through glass.
+ I'm wondering—when you say 'anymore,' there's a story there. What changed? Because here's what I'm noticing: you're not saying you've always been invisible. You're saying something shifted. And that matters.
+Sometimes when we lose connection, we start narrating ourselves as the problem—I must have done something wrong, I must be unlikable. But what if the story is more complicated? What if people pulled back because they were struggling, or the group dynamics shifted in ways that had nothing to do with your worth?
+I don't know your full story yet. But I want you to know—the fact that you're feeling this deeply, that you're aware of what you've lost? That's not a sign of weakness. That's emotional intelligence. That's you being brave enough to name the pain instead of numbing it.
+What would it be like to rewrite this chapter not as 'the time I became invisible,' but as 'the time I learned who I really am when the noise falls away?'"
 
 ---
 
