@@ -214,18 +214,7 @@ NarrativeFirst AI is seeking pre-seed funding to complete clinical validation an
 
 ---
 
-## 🎯 **WHAT THIS README DOES**
 
-✅ **Explains the problem** (investors care about market gaps)  
-✅ **Shows technical sophistication** (developers see it's real)  
-✅ **Demonstrates market opportunity** (CFOs see revenue potential)  
-✅ **Provides setup instructions** (anyone can clone and test)  
-✅ **Positions for funding** (clear investment ask)
-
----
-
-I've create a file called `.env.example` in my root:
-```
 # Anthropic API Configuration
 ANTHROPIC_API_KEY=sk-ant-your-key-here
 ANTHROPIC_MODEL=claude-3-5-sonnet-20240620
