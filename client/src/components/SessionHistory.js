@@ -6,9 +6,9 @@ const SessionHistory = ({ entries }) => {
       <div className="history-header">Past Entries</div>
       <ul className="history-list">
         {entries.map((entry, index) => (
-          <li key={index} className="history-item">
-            <span className="history-date">{entry.date}</span>
-            <span className="history-summary">{entry.summary}</span>
+          <li key={entry.id} className="history-item">
+            <span className="history-date">{entry.timestamp}</span>
+            <span className="history-summary">{entry.narrative.substring(0, 50)}</span>
           </li>
         ))}
       </ul>

@@ -32,6 +32,17 @@ const MainUI = () => {
           // CALL THE NEW API-DRIVEN FUNCTION
           const result = await NarrativeSimulator.generateNarrativeAndCommitment(transcript);
 
+          //Past entries new state update now renders 
+          const newEntry = {
+            id: Date.now(), // Unique ID for key prop
+            timestamp: new Date().toLocaleTimeString(),
+            userTranscript: transcript,
+            narrative: result.crystallizedNarrative,
+            microCommitment: result.microCommitment,
+        };
+
+        setSessionHistory(prevHistory => [newEntry, ...prevHistory]); // Add new entry to the start
+
           // Display the combined narrative and question
           setNarrativeText(`${result.crystallizedNarrative}\n\n${result.microCommitment}`);
 
@@ -89,6 +100,6 @@ const MainUI = () => {
       </div>
     </div>
   );
-};  // <-- ADD THIS CLOSING BRACE
+};  
 
 export default MainUI;

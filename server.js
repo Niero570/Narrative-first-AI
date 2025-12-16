@@ -227,7 +227,8 @@ ${conversationInsights}
     -> *Example: "Let's not look at the whole mountain. What's the one single thing right in front of you? Just name it."*
 
 4.  **NARRATIVE REFRAME (LATER):** Only after steps 1-3 are successful, you may gently reframe the micro-task into a narrative.
-    - **Use extreme discretion with pronouns:** Default to "you" (user-agency). Use "we" (collaborative) sparingly and only if the user has explicitly accepted collaboration.
+    - **Use extreme discretion with pronouns:** Default to "you" (user-agency). Use "we" (collaborative) sparingly and only if the user has explicitly accepted collaboration, and if the user hasn't, use transperecy.
+    -> *Example: "I never mean to come off as real person, I'm designed to be helpful and listen with no judgement, not to take the place of real human connection."
     - **The reframe must be a subtle shift, not a grand story:** Add a narrative lens to the agreed-upon micro-task.
     -> *Example (using "you"): "Okay, the electric bill. That's the dragon at your gate right now. What if your first move was just to find out how big it is?"*
     -> *Example (using "we" - only if collaboration was accepted): "Alright, so we're looking this dragon in the eye. What if the first move was just to see how big it is?"*
@@ -429,7 +430,7 @@ app.get('/api/onboarding-questions', (req, res) => {
   res.json(onboardingQuestions);
 });
 
-// New API endpoint to handle crystallized narrative
+/* New API endpoint to handle crystallized narrative
 app.post('/api/crystallize', async (req, res) => {
   try {
     // 1. Get the user entry from the request body
@@ -473,7 +474,8 @@ app.post('/api/crystallize', async (req, res) => {
     console.error('Crystallize endpoint error:', err);
     res.status(500).json({ error: 'Internal server error during narrative processing.' });
   }
-});
+});*/
+
 
 // Chat
 app.post('/api/chat', async (req, res) => {
@@ -556,6 +558,71 @@ if (!userProfile) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+
+//Crystallized Narrative live API endpoint
+
+app.post('/api/crystallize', async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text || text.length < 10) {
+      return res.status(400).json({ error: "Conversation text is too short." });
+    }
+
+    console.log('🔵 Crystallizing conversation:', text.substring(0, 100) + '...');
+
+    // Call Claude API to crystallize the narrative
+    const response = await anthropic.messages.create({
+      model: ANTHROPIC_MODEL,
+      max_tokens: 1000,
+      messages: [
+        {
+          role: 'user',
+          content: `You are reviewing a conversation between a user and their AI companion. Your job is to crystallize the key narrative and insights from this conversation into a diary entry.
+
+CONVERSATION:
+${text}
+
+Please provide:
+1. A "crystallized narrative" (2-3 sentences) that captures the core emotional journey or insight from this conversation
+2. A "reflection question" (1-2 sentences) that invites the user to continue exploring this theme
+
+Format your response as JSON:
+{
+  "narrative": "...",
+  "microCommitment": "..."
+}
+
+Be empathetic, insightful, and honor the depth of what was shared. Write in second person ("You realized..." not "They realized...").`
+        }
+      ]
+    });
+
+    console.log('🔵 Claude response:', response);
+
+    // Extract the text content
+    const content = response.content[0].text;
+    console.log('🔵 Content:', content);
+
+    // Parse the JSON response
+    const parsed = JSON.parse(content.replace(/```json|```/g, '').trim());
+
+    res.json({
+      narrative: parsed.narrative,
+      microCommitment: parsed.microCommitment,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (err) {
+    console.error('🔴 Crystallize endpoint error:', err);
+    res.status(500).json({ 
+      error: 'Internal server error during narrative processing.',
+      details: err.message 
+    });
+  }
+});
+
 
 // Onboarding
 app.post('/api/onboarding', async (req, res) => {

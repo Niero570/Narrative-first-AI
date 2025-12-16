@@ -174,7 +174,9 @@ function ChatWindow() {
     marginTop: '30px', 
     padding: '20px', 
     background: '#f5f5f5',
-    borderRadius: '8px'
+    borderRadius: '8px',
+    maxHeight: '400px',  // ADD THIS
+    overflowY: 'scroll'
   }}>
     <h3>Diary Entries</h3>
     {diaryEntries.map((entry, idx) => (
@@ -183,7 +185,8 @@ function ChatWindow() {
         padding: '15px',
         background: 'white',
         borderRadius: '5px',
-        borderLeft: '4px solid #4A9B8E'
+        borderLeft: '4px solid #4A9B8E',
+       
       }}>
         <p style={{ fontSize: '12px', color: '#666' }}>
           {new Date(entry.timestamp).toLocaleString()}
