@@ -1,11 +1,80 @@
 import React, { useState, useEffect } from 'react';
 
 function ChatWindow() {
+  const [userId, setUserId] = useState(null);
+  const [tempName, setTempName] = useState('');
+  // Rest of your component with userId
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState('gentle-guide');
   const [diaryEntries, setDiaryEntries] = useState([]);
+
+
+if (!userId) {
+  return (
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      minHeight: '100vh',
+      background: '#7EDECF',
+      flexDirection: 'column',
+      padding: '20px'
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '40px',
+        borderRadius: '15px',
+        maxWidth: '400px',
+        textAlign: 'center'
+      }}>
+        <h1>Welcome to NarrativeAI</h1>
+        <p style={{ marginTop: '20px', color: '#666' }}>
+          To begin, create a temporary session name:
+        </p>
+        <input
+          type="text"
+          value={tempName}
+          onChange={(e) => setTempName(e.target.value)}
+          placeholder="Enter any name (e.g. Sarah, Test1)"
+          style={{
+            width: '100%',
+            padding: '12px',
+            marginTop: '20px',
+            fontSize: '16px',
+            border: '2px solid #ddd',
+            borderRadius: '8px'
+          }}
+        />
+        <button
+          onClick={() => {
+            if (tempName.trim()) {
+              setUserId('session-' + tempName.trim());
+            }
+          }}
+          style={{
+            width: '100%',
+            padding: '12px',
+            marginTop: '20px',
+            background: '#4A9B8E',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            cursor: 'pointer'
+          }}
+        >
+          Start Session
+        </button>
+        <p style={{ marginTop: '20px', fontSize: '12px', color: '#999' }}>
+          This is a test version. Your session will be temporary.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 
   const sendMessage = async () => {
     if (!inputText.trim()) return;
@@ -24,7 +93,7 @@ function ChatWindow() {
         body: JSON.stringify({
           message: inputText,
           persona: selectedPersona,
-          userId: 'test-teen-1'
+          userId: userId
         })
       });
   
