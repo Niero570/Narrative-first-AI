@@ -3,13 +3,15 @@ import React, { useState, useEffect } from 'react';
 function ChatWindow() {
   const [userId, setUserId] = useState(null);
   const [tempName, setTempName] = useState('');
-  // Rest of your component with userId
-  const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedPersona, setSelectedPersona] = useState('gentle-guide');
-  const [diaryEntries, setDiaryEntries] = useState([]);
 
+// Rest of your component with userId
+const [messages, setMessages] = useState([]);
+const [inputText, setInputText] = useState('');
+const [isLoading, setIsLoading] = useState(false);
+const [selectedPersona, setSelectedPersona] = useState('gentle-guide');
+const [diaryEntries, setDiaryEntries] = useState([]);
+
+  
 
 if (!userId) {
   return (
@@ -75,7 +77,6 @@ if (!userId) {
   );
 }
 
-
   const sendMessage = async () => {
     if (!inputText.trim()) return;
   
@@ -87,7 +88,9 @@ if (!userId) {
   
     try {
       // Call your backend API
-      const response = await fetch('http://localhost:3001/api/chat', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -96,24 +99,24 @@ if (!userId) {
           userId: userId
         })
       });
-  
+      
       const data = await response.json();
       
       // Add AI response to chat
       const aiMessage = { role: 'assistant', content: data.response || data.message };
       setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
+        } catch (error) {
       console.error('Error:', error);
-    } finally {
+        } finally {
       setIsLoading(false);
-    }
-  };
+        }
+      };
 
-  const saveToDiary = async () => {
-    console.log('🔵 Save to Diary clicked');
-    console.log('🔵 Messages:', messages);
-    
-    try {
+      const saveToDiary = async () => {
+        console.log('🔵 Save to Diary clicked');
+        console.log('🔵 Messages:', messages);
+        
+        try {
       // Get the last 10 messages from the conversation
       const conversationText = messages
         .slice(-10)
