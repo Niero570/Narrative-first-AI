@@ -1,3 +1,4 @@
+import API_URL from '../config';
 import React, { useState, useEffect } from 'react';
 
 const Onboarding = ({ onComplete }) => {
@@ -50,7 +51,7 @@ const Onboarding = ({ onComplete }) => {
         // The answer value from the front-end state
         const responseValue = finalAnswers[questionKey];
         
-        const response = await fetch('/api/onboarding', {
+        const response = await fetch(`${API_URL}/api/onboarding-questions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

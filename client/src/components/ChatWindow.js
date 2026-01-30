@@ -1,3 +1,4 @@
+import API_URL from '../config';
 import React, { useState } from 'react';
 
 function ChatWindow() {
@@ -126,7 +127,7 @@ if (!userId) {
       console.log('🔵 Conversation text:', conversationText);
     
       // Call your crystallize endpoint
-      const response = await fetch('http://localhost:3001/api/crystallize', {
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: conversationText })
