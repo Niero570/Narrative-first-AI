@@ -4,15 +4,16 @@ import React, { useState } from 'react';
 function ChatWindow() {
   const [userId, setUserId] = useState(null);
   const [tempName, setTempName] = useState('');
-
-// Rest of your component with userId
-const [messages, setMessages] = useState([]);
-const [inputText, setInputText] = useState('');
-const [isLoading, setIsLoading] = useState(false);
-const [selectedPersona, setSelectedPersona] = useState('gentle-guide');
-const [diaryEntries, setDiaryEntries] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState('gentle-guide');
+  const [diaryEntries, setDiaryEntries] = useState([]);
 
   
+
+
+
 
 if (!userId) {
   return (
@@ -88,7 +89,7 @@ if (!userId) {
     setIsLoading(true);
   
     try {
-      // Call your backend API
+      // Call backend API
       const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
       const response = await fetch(`${API_URL}/api/chat`, {

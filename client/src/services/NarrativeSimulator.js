@@ -4,7 +4,7 @@ class NarrativeSimulator {
   static async generateNarrativeAndCommitment(userEntry) {
       
       // 1. Send the user's transcript to the backend API
-      const response = await fetch('/api/crystallize', {
+      const response = await fetch('${API_URL}/api/crystallize', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
