@@ -1,3 +1,4 @@
+import API_URL from '../config';
 // NarrativeSimulator.js - Now handles communication with the Express API endpoint (/api/crystallize)
 class NarrativeSimulator {
   // This is the core method that communicates with your Express server
