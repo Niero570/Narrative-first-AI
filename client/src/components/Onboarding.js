@@ -12,7 +12,7 @@ const Onboarding = ({ onComplete }) => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await fetch('/api/onboarding-questions');
+        const response = await fetch('${API_URL}/api/onboarding-questions');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
