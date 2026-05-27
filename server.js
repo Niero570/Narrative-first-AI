@@ -625,6 +625,15 @@ Be empathetic, insightful, and honor the depth of what was shared. Write in seco
 });
 
 
+// Normalize interests input (used by onboarding step 3)
+const normalizeInterests = (val) => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.map((s) => String(s).trim()).filter(Boolean);
+  if (typeof val === 'string')
+    return val.split(',').map((s) => s.trim()).filter(Boolean);
+  return [];
+};
+
 // Onboarding
 app.post('/api/onboarding', async (req, res) => {
   try {
@@ -633,52 +642,27 @@ app.post('/api/onboarding', async (req, res) => {
       return res.status(400).json({ error: 'userId and step are required' });
     }
 
-    let userProfile = await UserProfile.findOne({ userId });
-    if (!userProfile) {
-      // Create skeleton profile; ageRange is required, but we only enforce at completion.
-      userProfile = new UserProfile({
-        userId,
-        profile: {
-          communicationStyle: 'auto-detect',
-          interests: [],
-          preferredInteractionStyle: 'auto-adapt',
-          detectedPatterns: {},
-        },
-      });
-    }
-
-    // Normalize interests input
-    const normalizeInterests = (val) => {
-      if (!val) return [];
-      if (Array.isArray(val)) return val.map((s) => String(s).trim()).filter(Boolean);
-      if (typeof val === 'string')
-        return val
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
-      return [];
+    const stepFieldMap = {
+      1: 'profile.ageRange',
+      2: 'profile.communicationStyle',
+      3: 'profile.interests',
+      4: 'profile.preferredInteractionStyle',
     };
 
-    // Update by step
-    switch (Number(step)) {
-      case 1:
-        userProfile.profile.ageRange = response;
-        break;
-      case 2:
-        userProfile.profile.communicationStyle = response;
-        break;
-      case 3:
-        userProfile.profile.interests = normalizeInterests(response);
-        break;
-      case 4:
-        userProfile.profile.preferredInteractionStyle = response;
-        break;
-      default:
-        return res.status(400).json({ error: 'Invalid onboarding step' });
+    const field = stepFieldMap[Number(step)];
+    if (!field) {
+      return res.status(400).json({ error: 'Invalid onboarding step' });
     }
 
-    userProfile.markModified('profile');
-    await userProfile.save();
+    const value = Number(step) === 3 ? normalizeInterests(response) : response;
+
+    // Use findOneAndUpdate with upsert so Mongoose never needs to track nested changes.
+    // $set with dot-notation is the only reliable way to update nested fields in Mongoose 8.
+    await UserProfile.findOneAndUpdate(
+      { userId },
+      { $set: { [field]: value } },
+      { upsert: true, new: true, runValidators: false }
+    );
 
     const nextStep = Number(step) + 1;
     const nextQuestion = onboardingQuestions[`step${nextStep}`];
@@ -691,7 +675,7 @@ app.post('/api/onboarding', async (req, res) => {
     });
   } catch (err) {
     console.error('Onboarding error:', err);
-    res.status(500).json({ error: 'Onboarding failed' });
+    res.status(500).json({ error: 'Onboarding failed', details: err.message });
   }
 });
 
