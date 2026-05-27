@@ -4,7 +4,7 @@ module.exports = function(app) {
   app.use(
     '/api', // Target all API calls (e.g., /api/onboarding-questions)
     createProxyMiddleware({
-      target: 'http://localhost:3001', // Your Express server address
+      target: 'http://localhost:5000', // Your Express server address
       changeOrigin: true,
     })
   );
