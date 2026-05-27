@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { Anthropic } from '@anthropic-ai/sdk';
+import { Resend } from 'resend';
 import mongoose from 'mongoose';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -22,6 +23,9 @@ app.use(express.json());
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+// ===== Resend (Email) =====
+const resend = new Resend(process.env.RESEND_API_KEY);
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514'; // keep configurable
 
 // ===== MongoDB =====
@@ -96,6 +100,18 @@ const userProfileSchema = new mongoose.Schema(
 );
 
 const UserProfile = mongoose.model('UserProfile', userProfileSchema);
+
+// Subscriber Schema (beta sign-ups)
+const subscriberSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    emailSent: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+const Subscriber = mongoose.model('Subscriber', subscriberSchema);
 
 // ===== Personas =====
 const personas = {
@@ -449,8 +465,67 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'OK', message: 'Narrative AI Server Running' });
 });
 
+// Register session — saves subscriber + sends welcome email
+app.post('/api/register-session', async (req, res) => {
+  const { name, email } = req.body || {};
+
+  if (!name || !email) {
+    return res.status(400).json({ error: 'Name and email are required.' });
+  }
+
+  try {
+    let subscriber = await Subscriber.findOne({ email: email.toLowerCase() });
+
+    if (!subscriber) {
+      subscriber = await Subscriber.create({ name, email });
+
+      const fromAddress = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+
+      const { error: emailError } = await resend.emails.send({
+        from: fromAddress,
+        to: email,
+        subject: 'You showed up.',
+        html: `
+          <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 40px 20px; color: #2d3748;">
+            <p style="font-size: 22px; font-weight: 300; color: #2c5364; margin-bottom: 8px;">
+              narrative<strong style="color: #4A9B8E;">First</strong>
+            </p>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+            <p style="font-size: 17px; line-height: 1.7;">Hey ${name},</p>
+            <p style="font-size: 17px; line-height: 1.7;">
+              You just created your space here.
+            </p>
+            <p style="font-size: 17px; line-height: 1.7;">
+              This is where you get to think out loud — no judgment, no audience.
+              Just you and your story, whenever you're ready to look at it.
+            </p>
+            <p style="font-size: 17px; line-height: 1.7;">
+              Start talking. Save what matters. Come back to it.
+            </p>
+            <p style="font-size: 17px; line-height: 1.7; margin-top: 32px; color: #4A9B8E;">
+              — narrativeFirst
+            </p>
+          </div>
+        `,
+      });
+
+      if (emailError) {
+        console.error('❌ Resend error:', emailError);
+      } else {
+        await Subscriber.updateOne({ _id: subscriber._id }, { emailSent: true });
+        console.log(`✅ Welcome email sent to ${email}`);
+      }
+    }
+
+    res.json({ success: true, userId: `session-${name.trim()}` });
+  } catch (err) {
+    console.error('❌ register-session error:', err);
+    res.status(500).json({ error: 'Session registration failed.' });
+  }
+});
+
 // API endpoint to get onboarding questions
-app.get('/api/onboarding-questions', (req, res) => {
+app.get('/api/onboarding-questions', (_req, res) => {
   res.json(onboardingQuestions);
 });
 

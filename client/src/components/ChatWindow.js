@@ -10,6 +10,7 @@ function ChatWindow() {
   const [tempName, setTempName] = useState('');
   const [tempEmail, setTempEmail] = useState('');
   const [welcomeError, setWelcomeError] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +51,7 @@ function ChatWindow() {
     }
   };
 
-  const handleBeginSession = () => {
+  const handleBeginSession = async () => {
     if (!tempName.trim()) {
       setWelcomeError('Please enter your name.');
       return;
@@ -60,7 +61,24 @@ function ChatWindow() {
       setWelcomeError('Please enter a valid email address.');
       return;
     }
-    setUserId('session-' + tempName.trim());
+
+    setIsRegistering(true);
+    setWelcomeError('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/register-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: tempName.trim(), email: tempEmail.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Registration failed');
+      setUserId(data.userId);
+    } catch (err) {
+      console.error('Registration error:', err);
+      setWelcomeError('Something went wrong. Please try again.');
+      setIsRegistering(false);
+    }
   };
 
   if (!userId) {
@@ -93,8 +111,8 @@ function ChatWindow() {
             className="cw-welcome-input"
           />
           {welcomeError && <p className="cw-welcome-error">{welcomeError}</p>}
-          <button onClick={handleBeginSession} className="cw-welcome-btn">
-            Begin Session
+          <button onClick={handleBeginSession} disabled={isRegistering} className="cw-welcome-btn">
+            {isRegistering ? 'Starting...' : 'Begin Session'}
           </button>
           <p className="cw-welcome-note">Beta version · Your session is private</p>
         </div>
