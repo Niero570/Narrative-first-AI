@@ -69,6 +69,7 @@ const userProfileSchema = new mongoose.Schema(
         type: String,
         enum: ['child', 'teen', 'young-adult', 'adult', 'prefer-not-to-say'],
         required: true,
+        default: 'prefer-not-to-say',
       },
       communicationStyle: {
         type: String,
@@ -676,6 +677,7 @@ app.post('/api/onboarding', async (req, res) => {
         return res.status(400).json({ error: 'Invalid onboarding step' });
     }
 
+    userProfile.markModified('profile');
     await userProfile.save();
 
     const nextStep = Number(step) + 1;
