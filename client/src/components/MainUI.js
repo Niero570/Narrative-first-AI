@@ -16,7 +16,9 @@ const MainUI = () => {
   const [speechService] = useState(() => new SpeechRecognitionService()); // Initialize once
 
   useEffect(() => {
+    
     // Only set up listeners if the recognition object is available
+
     if (!speechService.recognition) {
         setNarrativeText("Voice input not supported by this browser.");
         return;
@@ -24,6 +26,7 @@ const MainUI = () => {
 
     
     // Handles the final transcription and triggers the API call
+    
     speechService.onResult(async (transcript) => {
       setIsListening(false);
       setIsProcessing(true);
@@ -32,7 +35,8 @@ const MainUI = () => {
           // CALL THE NEW API-DRIVEN FUNCTION
           const result = await NarrativeSimulator.generateNarrativeAndCommitment(transcript);
 
-          //Past entries new state update now renders 
+          //Past entries new state update now renders
+
           const newEntry = {
             id: Date.now(), // Unique ID for key prop
             timestamp: new Date().toLocaleTimeString(),

@@ -89,9 +89,6 @@ if (!userId) {
     setIsLoading(true);
   
     try {
-      // Call backend API
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -128,7 +125,7 @@ if (!userId) {
       console.log('🔵 Conversation text:', conversationText);
     
       // Call your crystallize endpoint
-      const response = await fetch(`${API_URL}/api/chat`, {
+      const response = await fetch(`${API_URL}/api/crystallize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: conversationText })

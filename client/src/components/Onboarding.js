@@ -30,12 +30,12 @@ const Onboarding = ({ onComplete }) => {
 
   const handleNext = (questionId, answer) => {
     const nextStepKey = `step${parseInt(questionId.slice(4)) + 1}`;
-    setAnswers(prev => ({ ...prev, [questionId]: answer }));
+    const updatedAnswers = { ...answers, [questionId]: answer };
+    setAnswers(updatedAnswers);
     if (questions[nextStepKey]) {
       setCurrentStep(nextStepKey);
     } else {
-      // Last step, submit all answers
-      handleSubmit(answers);
+      handleSubmit(updatedAnswers);
     }
   };
 
@@ -51,7 +51,7 @@ const Onboarding = ({ onComplete }) => {
         // The answer value from the front-end state
         const responseValue = finalAnswers[questionKey];
         
-        const response = await fetch(`${API_URL}/api/onboarding-questions`, {
+        const response = await fetch(`${API_URL}/api/onboarding`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
