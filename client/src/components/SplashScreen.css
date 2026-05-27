@@ -1,0 +1,148 @@
+/* ===== Splash Shell ===== */
+.splash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  z-index: 1000;
+  cursor: pointer;
+  animation: splash-in 0.6s ease forwards;
+}
+
+.splash--exiting {
+  animation: splash-out 0.7s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes splash-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes splash-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ===== Centered Content ===== */
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  padding: 0 24px;
+}
+
+/* ===== Logo Mark ===== */
+.splash-mark {
+  font-size: 2.8rem;
+  color: #7EDECF;
+  animation: mark-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+@keyframes mark-in {
+  from { opacity: 0; transform: scale(0.3); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Gentle continuous pulse on the mark */
+.splash--entering .splash-mark {
+  animation:
+    mark-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both,
+    mark-pulse 2.4s ease-in-out 1s infinite;
+}
+
+@keyframes mark-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.7; transform: scale(1.08); }
+}
+
+/* ===== Brand Name ===== */
+.splash-name {
+  margin: 0;
+  font-size: clamp(2.4rem, 8vw, 3.6rem);
+  font-weight: 300;
+  letter-spacing: -0.5px;
+  animation: name-in 0.7s ease 0.7s both;
+}
+
+@keyframes name-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.splash-narrative {
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 300;
+}
+
+.splash-first {
+  color: #7EDECF;
+  font-weight: 700;
+}
+
+/* ===== Tagline — one inline sentence ===== */
+.splash-tagline {
+  font-size: clamp(1rem, 3.5vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+  letter-spacing: 0.2px;
+  line-height: 1.5;
+  animation: tagline-in 0.5s ease 1.1s both;
+
+  /* Reserve enough width so the line doesn't reflow as words swap */
+  min-width: min(480px, 90vw);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 0.25em;
+}
+
+@keyframes tagline-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ===== Cycling Word ===== */
+.splash-word {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.35);
+  font-style: italic;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.15s ease, transform 0.15s ease, color 0.3s ease;
+}
+
+.splash-word--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* "truth" gets full brightness when it lands */
+.splash-word--final {
+  color: #7EDECF;
+  font-weight: 600;
+  font-style: normal;
+}
+
+/* ===== Skip hint ===== */
+.splash-skip {
+  position: absolute;
+  bottom: 32px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.5px;
+  margin: 0;
+  animation: splash-in 0.5s ease 2s both;
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 480px) {
+  .splash-mark { font-size: 2.2rem; }
+  .splash-skip { bottom: 24px; }
+}

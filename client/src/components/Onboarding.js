@@ -130,8 +130,8 @@ const Onboarding = ({ onComplete }) => {
   return (
     <div className="onboarding-container">
       <div className="onboarding-card">
-        <h2>Welcome to Your Talking Diary</h2>
-        <p>Before we begin, a little about you so I can be a better listener.</p>
+        <h2>Welcome to <span style={{fontWeight:700, color:'#4A9B8E'}}>narrativeFirst</span></h2>
+        <p>Your talking diary. Before we begin, a little about you so I can be a better listener.</p>
         {renderQuestion(currentStep)}
       </div>
     </div>
