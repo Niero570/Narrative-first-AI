@@ -1,3 +1,22 @@
+/* ===== Brand Name ===== */
+.cw-name-narrative {
+  font-weight: 300;
+  color: #2c5364;
+}
+.cw-name-first {
+  font-weight: 700;
+  color: #4A9B8E;
+}
+.cw-name-narrative-sm {
+  font-weight: 300;
+  color: rgba(255,255,255,0.75);
+  letter-spacing: 0;
+}
+.cw-name-first-sm {
+  font-weight: 700;
+  color: #7EDECF;
+}
+
 /* ===== Welcome / Landing Screen ===== */
 .cw-welcome-screen {
   display: flex;
@@ -77,6 +96,13 @@
 .cw-welcome-btn:hover {
   opacity: 0.92;
   transform: translateY(-2px);
+}
+
+.cw-welcome-error {
+  font-size: 13px;
+  color: #c0392b;
+  margin: 4px 0 0;
+  text-align: left;
 }
 
 .cw-welcome-note {
@@ -414,6 +440,43 @@
   background: rgba(220, 80, 80, 0.07);
   border-color: #e88080;
   color: #c0392b;
+}
+
+/* ===== Mic Button ===== */
+.cw-mic-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1.5px solid #dce6ea;
+  background: #f0f6f8;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.cw-mic-btn:hover {
+  border-color: #4A9B8E;
+  background: #e2eef2;
+}
+
+.cw-mic-btn--active {
+  background: linear-gradient(135deg, #4A9B8E, #2c5364);
+  border-color: transparent;
+  animation: cw-pulse 1.5s infinite;
+}
+
+@keyframes cw-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 155, 142, 0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(74, 155, 142, 0); }
+}
+
+.cw-textarea--listening {
+  border-color: #4A9B8E;
+  background: rgba(74, 155, 142, 0.04);
 }
 
 /* ===== Diary Panel ===== */

@@ -1,10 +1,15 @@
 import API_URL from '../config';
 import React, { useState, useRef, useEffect } from 'react';
+import SpeechRecognitionService from '../services/SpeechRecognitionService';
 import './ChatWindow.css';
+
+const speechService = new SpeechRecognitionService();
 
 function ChatWindow() {
   const [userId, setUserId] = useState(null);
   const [tempName, setTempName] = useState('');
+  const [tempEmail, setTempEmail] = useState('');
+  const [welcomeError, setWelcomeError] = useState('');
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -12,34 +17,83 @@ function ChatWindow() {
   const [diaryEntries, setDiaryEntries] = useState([]);
   const [activeTab, setActiveTab] = useState('chat');
   const [saveStatus, setSaveStatus] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+  const [micSupported] = useState(() => !!speechService.recognition);
   const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (!speechService.recognition) return;
+
+    speechService.onResult((transcript) => {
+      setIsListening(false);
+      setInputText(prev => prev ? prev + ' ' + transcript : transcript);
+      textareaRef.current?.focus();
+    });
+
+    speechService.onError(() => {
+      setIsListening(false);
+    });
+  }, []);
+
+  const handleMicClick = () => {
+    if (isListening) {
+      speechService.stopListening();
+      setIsListening(false);
+    } else {
+      setIsListening(true);
+      speechService.startListening();
+    }
+  };
+
+  const handleBeginSession = () => {
+    if (!tempName.trim()) {
+      setWelcomeError('Please enter your name.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!tempEmail.trim() || !emailRegex.test(tempEmail)) {
+      setWelcomeError('Please enter a valid email address.');
+      return;
+    }
+    setUserId('session-' + tempName.trim());
+  };
 
   if (!userId) {
     return (
       <div className="cw-welcome-screen">
         <div className="cw-welcome-card">
           <div className="cw-logo-mark">✦</div>
-          <h1 className="cw-welcome-title">NarrativeAI</h1>
+          <h1 className="cw-welcome-title">
+            <span className="cw-name-narrative">narrative</span>
+            <span className="cw-name-first">First</span>
+          </h1>
           <p className="cw-welcome-subtitle">
             A space to think out loud, reflect, and find your way through.
           </p>
           <input
             type="text"
             value={tempName}
-            onChange={(e) => setTempName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && tempName.trim() && setUserId('session-' + tempName.trim())}
-            placeholder="What should I call you?"
+            onChange={(e) => { setTempName(e.target.value); setWelcomeError(''); }}
+            onKeyDown={(e) => e.key === 'Enter' && handleBeginSession()}
+            placeholder="Your name"
             className="cw-welcome-input"
             autoFocus
           />
-          <button
-            onClick={() => tempName.trim() && setUserId('session-' + tempName.trim())}
-            className="cw-welcome-btn"
-          >
+          <input
+            type="email"
+            value={tempEmail}
+            onChange={(e) => { setTempEmail(e.target.value); setWelcomeError(''); }}
+            onKeyDown={(e) => e.key === 'Enter' && handleBeginSession()}
+            placeholder="Your email"
+            className="cw-welcome-input"
+          />
+          {welcomeError && <p className="cw-welcome-error">{welcomeError}</p>}
+          <button onClick={handleBeginSession} className="cw-welcome-btn">
             Begin Session
           </button>
           <p className="cw-welcome-note">Beta version · Your session is private</p>
@@ -112,18 +166,20 @@ function ChatWindow() {
   };
 
   const personas = [
-    { value: 'gentle-guide', label: 'Gentle Guide', desc: 'Warm, metaphorical, story-driven' },
-    { value: 'fellow-traveler', label: 'Fellow Traveler', desc: 'Empathetic, walks beside you' },
-    { value: 'wise-old-fool', label: 'Wise Old Fool', desc: 'Direct, witty, shakes things up' },
+    { value: 'gentle-guide', label: 'Gentle Guide' },
+    { value: 'fellow-traveler', label: 'Fellow Traveler' },
+    { value: 'wise-old-fool', label: 'Wise Old Fool' },
   ];
 
   return (
     <div className="cw-shell">
-      {/* Header */}
       <header className="cw-header">
         <div className="cw-header-left">
           <span className="cw-logo-mark-sm">✦</span>
-          <span className="cw-header-title">NarrativeAI</span>
+          <span className="cw-header-title">
+            <span className="cw-name-narrative-sm">narrative</span>
+            <span className="cw-name-first-sm">First</span>
+          </span>
         </div>
         <div className="cw-header-right">
           <select
@@ -138,13 +194,11 @@ function ChatWindow() {
         </div>
       </header>
 
-      {/* Persona badge */}
       <div className="cw-persona-badge">
         Speaking with: <strong>{personaLabels[selectedPersona]}</strong>
         {selectedPersona === 'wise-old-fool' && <span className="cw-badge-tag">New</span>}
       </div>
 
-      {/* Tab nav */}
       <nav className="cw-tabs">
         <button
           className={`cw-tab ${activeTab === 'chat' ? 'cw-tab--active' : ''}`}
@@ -160,7 +214,6 @@ function ChatWindow() {
         </button>
       </nav>
 
-      {/* Chat panel */}
       {activeTab === 'chat' && (
         <div className="cw-chat-panel">
           <div className="cw-messages">
@@ -186,7 +239,18 @@ function ChatWindow() {
 
           <div className="cw-input-area">
             <div className="cw-input-row">
+              {micSupported && (
+                <button
+                  onClick={handleMicClick}
+                  className={`cw-mic-btn ${isListening ? 'cw-mic-btn--active' : ''}`}
+                  aria-label={isListening ? 'Stop listening' : 'Speak your message'}
+                  title={isListening ? 'Tap to stop' : 'Tap to speak'}
+                >
+                  {isListening ? '⏹' : '🎙'}
+                </button>
+              )}
               <textarea
+                ref={textareaRef}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => {
@@ -195,8 +259,8 @@ function ChatWindow() {
                     sendMessage();
                   }
                 }}
-                placeholder="What's on your mind?"
-                className="cw-textarea"
+                placeholder={isListening ? 'Listening...' : 'Type or speak your message...'}
+                className={`cw-textarea ${isListening ? 'cw-textarea--listening' : ''}`}
                 rows={1}
               />
               <button
@@ -222,7 +286,6 @@ function ChatWindow() {
         </div>
       )}
 
-      {/* Diary panel */}
       {activeTab === 'diary' && (
         <div className="cw-diary-panel">
           {diaryEntries.length === 0 ? (
