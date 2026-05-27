@@ -2,30 +2,43 @@ import React, { useEffect, useState } from 'react';
 import './SplashScreen.css';
 
 const CYCLE_WORDS = ['clarity', 'perspective', 'honesty', 'courage', 'truth'];
-const WORD_DURATION = 420;
+const WORD_DURATION = 750;   // how long each word is shown
+const CYCLE_START = 1800;    // wait until tagline is fully visible before cycling
 
 function SplashScreen({ onComplete }) {
   const [wordIndex, setWordIndex] = useState(0);
-  const [wordVisible, setWordVisible] = useState(true);
+  const [wordVisible, setWordVisible] = useState(false);
+  const [cycleStarted, setCycleStarted] = useState(false);
   const [phase, setPhase] = useState('entering');
   const isFinal = wordIndex === CYCLE_WORDS.length - 1;
 
+  // Delay before cycling begins so user sees the layout settle first
   useEffect(() => {
-    if (isFinal) return;
+    const startTimer = setTimeout(() => {
+      setCycleStarted(true);
+      setWordVisible(true);
+    }, CYCLE_START);
+    return () => clearTimeout(startTimer);
+  }, []);
 
-    const fadeOut = setTimeout(() => setWordVisible(false), WORD_DURATION - 120);
+  // Advance through words once cycling has started
+  useEffect(() => {
+    if (!cycleStarted || isFinal) return;
+
+    const fadeOut = setTimeout(() => setWordVisible(false), WORD_DURATION - 160);
     const next = setTimeout(() => {
       setWordIndex(i => i + 1);
       setWordVisible(true);
     }, WORD_DURATION);
 
     return () => { clearTimeout(fadeOut); clearTimeout(next); };
-  }, [wordIndex, isFinal]);
+  }, [wordIndex, cycleStarted, isFinal]);
 
+  // Exit after full cycle + hold on "truth"
   useEffect(() => {
-    const cycleEnd = CYCLE_WORDS.length * WORD_DURATION;
-    const exitTimer = setTimeout(() => setPhase('exiting'), cycleEnd + 1600);
-    const doneTimer = setTimeout(() => onComplete(), cycleEnd + 2300);
+    const totalCycle = CYCLE_START + CYCLE_WORDS.length * WORD_DURATION;
+    const exitTimer = setTimeout(() => setPhase('exiting'), totalCycle + 1800);
+    const doneTimer = setTimeout(() => onComplete(), totalCycle + 2600);
     return () => { clearTimeout(exitTimer); clearTimeout(doneTimer); };
   }, [onComplete]);
 
