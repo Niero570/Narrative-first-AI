@@ -1,0 +1,107 @@
+.pw-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 32, 39, 0.82);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+  animation: pw-fade 0.35s ease both;
+}
+
+@keyframes pw-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.pw-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 48px 40px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+  animation: pw-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@keyframes pw-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.pw-mark {
+  font-size: 2rem;
+  color: #4A9B8E;
+}
+
+.pw-heading {
+  font-size: 1.8rem;
+  font-weight: 300;
+  color: #1a3a4a;
+  margin: 0;
+}
+
+.pw-sub {
+  font-size: 15px;
+  color: #6b7c85;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.pw-btn-primary {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #4A9B8E 0%, #2c5364 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  margin-top: 8px;
+}
+.pw-btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+
+.pw-btn-secondary {
+  width: 100%;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c5364;
+  background: #f0f6f8;
+  border: 1.5px solid #c8d8de;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.pw-btn-secondary:hover { background: #e2eef2; border-color: #4A9B8E; }
+
+.pw-btn-ghost {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  color: #9ab0bb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.pw-btn-ghost:hover { color: #2c5364; }
+
+.pw-note {
+  font-size: 12px;
+  color: #b8c8d0;
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .pw-card { padding: 36px 24px; }
+  .pw-heading { font-size: 1.5rem; }
+}

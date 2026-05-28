@@ -4,6 +4,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { Resend } from 'resend';
+import Stripe from 'stripe';
+import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -15,7 +17,13 @@ const __dirname = dirname(__filename)
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const JWT_SECRET      = process.env.JWT_SECRET      || 'nf-dev-secret-change-in-prod';
+const FREE_MESSAGES   = 20;
+const CLIENT_URL      = process.env.CLIENT_URL       || 'http://localhost:8080';
+
 // ===== Middleware =====
+// Stripe webhook needs raw body BEFORE express.json() parses it
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(cors());
 app.use(express.json());
 
@@ -26,6 +34,12 @@ const anthropic = new Anthropic({
 
 // ===== Resend (Email) =====
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// ===== Stripe =====
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
+  : null;
+if (!stripe) console.warn('⚠️  STRIPE_SECRET_KEY not set — payment features disabled');
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514'; // keep configurable
 
 // ===== MongoDB =====
@@ -101,17 +115,35 @@ const userProfileSchema = new mongoose.Schema(
 
 const UserProfile = mongoose.model('UserProfile', userProfileSchema);
 
-// Subscriber Schema (beta sign-ups)
+// Subscriber / User Schema
 const subscriberSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    emailSent: { type: Boolean, default: false },
+    name:                 { type: String, required: true },
+    email:                { type: String, required: true, unique: true, lowercase: true, trim: true },
+    emailSent:            { type: Boolean, default: false },
+    isPremium:            { type: Boolean, default: false },
+    messageCount:         { type: Number,  default: 0 },
+    stripeCustomerId:     { type: String },
+    stripeSubscriptionId: { type: String },
   },
   { timestamps: true }
 );
 
 const Subscriber = mongoose.model('Subscriber', subscriberSchema);
+
+// Diary Entry Schema
+const diaryEntrySchema = new mongoose.Schema(
+  {
+    userId:          { type: String, required: true, index: true },
+    narrative:       { type: String, required: true },
+    microCommitment: { type: String },
+    persona:         { type: String },
+    faithLens:       { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+const DiaryEntry = mongoose.model('DiaryEntry', diaryEntrySchema);
 
 // ===== Personas =====
 const personas = {
@@ -475,6 +507,191 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'OK', message: 'Narrative AI Server Running' });
 });
 
+// ───────────────────────────────────────────────────────────────
+// AUTH
+// ───────────────────────────────────────────────────────────────
+
+// Login / register — finds or creates user, issues JWT, sends welcome email once
+app.post('/api/auth/login', async (req, res) => {
+  const { name, email } = req.body || {};
+  if (!name || !email) return res.status(400).json({ error: 'Name and email required.' });
+
+  try {
+    const normalEmail = email.toLowerCase().trim();
+    let user = await Subscriber.findOne({ email: normalEmail });
+    const isNew = !user;
+
+    if (isNew) {
+      user = await Subscriber.create({ name, email: normalEmail });
+      // Welcome email — fire and forget
+      const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+      resend.emails.send({
+        from,
+        to: normalEmail,
+        subject: 'You showed up.',
+        html: `<div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;padding:40px 20px;color:#2d3748">
+          <p style="font-size:22px;font-weight:300;color:#2c5364">narrative<strong style="color:#4A9B8E">First</strong></p>
+          <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0"/>
+          <p style="font-size:17px;line-height:1.7">Hey ${name},</p>
+          <p style="font-size:17px;line-height:1.7">You just created your space here. This is where you get to think out loud — no judgment, no audience.</p>
+          <p style="font-size:17px;line-height:1.7">Start talking. Save what matters. Come back to it.</p>
+          <p style="font-size:17px;line-height:1.7;color:#4A9B8E">— narrativeFirst</p></div>`,
+      }).then(({ error }) => {
+        if (!error) Subscriber.updateOne({ _id: user._id }, { emailSent: true }).exec();
+        else console.error('❌ Resend error:', error);
+      });
+    }
+
+    const token = jwt.sign(
+      { sub: normalEmail, name: user.name, userId: normalEmail },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    res.json({
+      token,
+      user: { name: user.name, email: normalEmail, userId: normalEmail,
+              isPremium: user.isPremium, messageCount: user.messageCount },
+    });
+  } catch (err) {
+    console.error('❌ auth/login error:', err);
+    res.status(500).json({ error: 'Login failed.' });
+  }
+});
+
+// Verify JWT and return fresh user data
+app.get('/api/auth/verify', async (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'No token.' });
+  try {
+    const { sub: email } = jwt.verify(auth.slice(7), JWT_SECRET);
+    const user = await Subscriber.findOne({ email }).lean();
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    res.json({
+      user: { name: user.name, email: user.email, userId: user.email,
+              isPremium: user.isPremium, messageCount: user.messageCount },
+    });
+  } catch {
+    res.status(401).json({ error: 'Invalid token.' });
+  }
+});
+
+// ───────────────────────────────────────────────────────────────
+// CONVERSATION HISTORY
+// ───────────────────────────────────────────────────────────────
+
+app.get('/api/conversations/:userId', async (req, res) => {
+  try {
+    const convo = await Conversation.findOne({ userId: req.params.userId }).lean();
+    const messages = convo?.messages?.slice(-40) || [];
+    res.json({ messages });
+  } catch (err) {
+    console.error('❌ conversations load error:', err);
+    res.status(500).json({ error: 'Could not load conversation.' });
+  }
+});
+
+// ───────────────────────────────────────────────────────────────
+// DIARY PERSISTENCE
+// ───────────────────────────────────────────────────────────────
+
+app.post('/api/diary', async (req, res) => {
+  const { userId, narrative, microCommitment, persona, faithLens } = req.body || {};
+  if (!userId || !narrative) return res.status(400).json({ error: 'userId and narrative required.' });
+  try {
+    const entry = await DiaryEntry.create({ userId, narrative, microCommitment, persona, faithLens });
+    res.json({ success: true, entry });
+  } catch (err) {
+    console.error('❌ diary save error:', err);
+    res.status(500).json({ error: 'Could not save diary entry.' });
+  }
+});
+
+app.get('/api/diary/:userId', async (req, res) => {
+  try {
+    const entries = await DiaryEntry.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+    res.json({ entries });
+  } catch (err) {
+    console.error('❌ diary load error:', err);
+    res.status(500).json({ error: 'Could not load diary.' });
+  }
+});
+
+// ───────────────────────────────────────────────────────────────
+// STRIPE
+// ───────────────────────────────────────────────────────────────
+
+app.post('/api/stripe/create-checkout-session', async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: 'Payments not configured.' });
+  const { userId, email, name } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'userId required.' });
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      customer_email: email,
+      client_reference_id: userId,
+      line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+      success_url: `${CLIENT_URL}?payment=success&userId=${encodeURIComponent(userId)}`,
+      cancel_url:  `${CLIENT_URL}?payment=cancelled`,
+      metadata: { name: name || '' },
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('❌ Stripe checkout error:', err);
+    res.status(500).json({ error: 'Could not create checkout session.' });
+  }
+});
+
+app.post('/api/stripe/webhook', async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: 'Payments not configured.' });
+  const sig    = req.headers['stripe-signature'];
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, secret);
+  } catch (err) {
+    console.error('❌ Stripe webhook signature error:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session  = event.data.object;
+    const userId   = session.client_reference_id;
+    const customerId = session.customer;
+    const subscriptionId = session.subscription;
+    try {
+      await Subscriber.findOneAndUpdate(
+        { email: userId },
+        { isPremium: true, stripeCustomerId: customerId, stripeSubscriptionId: subscriptionId }
+      );
+      console.log(`✅ Premium activated for ${userId}`);
+    } catch (err) {
+      console.error('❌ Stripe webhook DB error:', err);
+    }
+  }
+
+  if (event.type === 'customer.subscription.deleted') {
+    const sub = event.data.object;
+    try {
+      await Subscriber.findOneAndUpdate(
+        { stripeSubscriptionId: sub.id },
+        { isPremium: false, stripeSubscriptionId: null }
+      );
+      console.log(`⚠️  Premium cancelled for subscription ${sub.id}`);
+    } catch (err) {
+      console.error('❌ Stripe cancellation DB error:', err);
+    }
+  }
+
+  res.json({ received: true });
+});
+
 // Register session — saves subscriber + sends welcome email
 app.post('/api/register-session', async (req, res) => {
   const { name, email } = req.body || {};
@@ -593,6 +810,20 @@ app.post('/api/chat', async (req, res) => {
 
     if (!message || !userId) {
       return res.status(400).json({ error: 'Message and userId are required' });
+    }
+
+    // Free message limit check
+    const subscriber = await Subscriber.findOne({ email: userId }).lean();
+    if (subscriber && !subscriber.isPremium && subscriber.messageCount >= FREE_MESSAGES) {
+      return res.status(402).json({
+        paywall: true,
+        messageCount: subscriber.messageCount,
+        message: 'Free message limit reached.',
+      });
+    }
+    // Increment message count
+    if (subscriber) {
+      await Subscriber.updateOne({ email: userId }, { $inc: { messageCount: 1 } });
     }
 
    // Ensure onboarding complete

@@ -60,8 +60,17 @@ export default function SetupFlow({ onComplete }) {
   }, [step]);
 
   const finish = () => {
-    onComplete({ name, email, faithLens, persona, mood,
-      userId: `session-${name.trim()}` });
+    const stored = JSON.parse(localStorage.getItem('nf_user') || '{}');
+    onComplete({
+      name:       stored.name  || name,
+      email:      stored.email || email.toLowerCase(),
+      userId:     stored.email || email.toLowerCase(),
+      isPremium:  stored.isPremium  || false,
+      messageCount: stored.messageCount || 0,
+      faithLens,
+      persona,
+      mood,
+    });
   };
 
   const handleWelcomeSubmit = async () => {
@@ -71,12 +80,15 @@ export default function SetupFlow({ onComplete }) {
     setError('');
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/api/register-session`, {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: email.trim() }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase() }),
       });
       if (!res.ok) throw new Error();
+      const data = await res.json();
+      localStorage.setItem('nf_auth', data.token);
+      localStorage.setItem('nf_user', JSON.stringify(data.user));
       setStep('faith');
     } catch {
       setError('Something went wrong. Please try again.');

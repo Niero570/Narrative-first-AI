@@ -17,7 +17,8 @@
         "express": "^4.21.2",
         "jsonwebtoken": "^9.0.2",
         "mongoose": "^8.16.3",
-        "resend": "^6.12.4"
+        "resend": "^6.12.4",
+        "stripe": "^22.2.0"
     },
     "devDependencies": {
         "jest": "^29.7.0",
