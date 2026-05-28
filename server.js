@@ -415,8 +415,16 @@ function analyzeEmotionalContent(message = '') {
   return { mood, themes };
 }
 
+// ===== Faith Lens Modifier =====
+const FAITH_LENS_MODIFIER = `
+The user has indicated a Christian faith background. Where it feels natural and authentic:
+- Weave in a relevant scripture reference if it genuinely illuminates the reflection (cite book and verse)
+- Offer prayer as one possible micro-commitment option
+- Use concepts of grace, redemption, and hope where they fit organically
+Never force this. Let it arise from the conversation, not the other way around.`;
+
 // ===== Response Generation =====
-async function createPersonalizedResponse(userMessage, conversationDoc, userProfileDoc, personaKey = 'gentle-guide') {
+async function createPersonalizedResponse(userMessage, conversationDoc, userProfileDoc, personaKey = 'gentle-guide', faithLens = false) {
   const personaAdapter = new PersonaAdapter();
   const basePersona = personas[personaKey] || personas['gentle-guide'];
 
@@ -426,12 +434,14 @@ async function createPersonalizedResponse(userMessage, conversationDoc, userProf
     conversationDoc.messages || []
   );
 
+  const faithModifier = faithLens ? FAITH_LENS_MODIFIER : '';
+
   const recentContext = (conversationDoc.messages || [])
     .slice(-8)
     .map((m) => `${m.role}: ${m.content}`)
     .join('\n');
 
-  const fullPrompt = `${adaptedPrompt}
+  const fullPrompt = `${adaptedPrompt}${faithModifier}
 
 Recent conversation:
 ${recentContext || '(no prior messages yet)'}
@@ -579,7 +589,7 @@ app.post('/api/crystallize', async (req, res) => {
 // Chat
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, userId, persona = 'gentle-guide' } = req.body || {};
+    const { message, userId, persona = 'gentle-guide', faithLens = false } = req.body || {};
 
     if (!message || !userId) {
       return res.status(400).json({ error: 'Message and userId are required' });
@@ -636,8 +646,8 @@ if (!userProfile) {
     // Append user message
     conversation.messages.push({ role: 'user', content: message });
 
-    // Generate AI response
-    const aiResponse = await createPersonalizedResponse(message, conversation, userProfile, persona);
+    // Generate AI response — faithLens modifies prompt only, no DB write
+    const aiResponse = await createPersonalizedResponse(message, conversation, userProfile, persona, faithLens);
 
     // Append assistant message
     conversation.messages.push({ role: 'assistant', content: aiResponse });

@@ -1,339 +1,351 @@
 import API_URL from '../config';
-import React, { useState, useRef, useEffect } from 'react';
-import SpeechRecognitionService from '../services/SpeechRecognitionService';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './ChatWindow.css';
 
-const speechService = new SpeechRecognitionService();
+// ─── TTS stub ────────────────────────────────────────────────────────────────
+// personaId values: 'gentle-guide' | 'fellow-traveler' | 'wise-old-fool'
+// TODO: ElevenLabs integration
+// Map persona IDs to ElevenLabs voice IDs and call their generate API:
+//   const voiceIdMap = {
+//     'gentle-guide':    'VOICE_ID_1',
+//     'fellow-traveler': 'VOICE_ID_2',
+//     'wise-old-fool':   'VOICE_ID_3',
+//   };
+//   const audio = await elevenlabs.generate({ voice: voiceIdMap[personaId], text });
+//   audio.play();
+function speakMessage(text, personaId) {    // eslint-disable-line no-unused-vars
+  console.log(`[TTS stub] personaId=${personaId} length=${text.length}`);
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
-function ChatWindow() {
-  const [userId, setUserId] = useState(null);
-  const [tempName, setTempName] = useState('');
-  const [tempEmail, setTempEmail] = useState('');
-  const [welcomeError, setWelcomeError] = useState('');
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedPersona, setSelectedPersona] = useState('gentle-guide');
-  const [diaryEntries, setDiaryEntries] = useState([]);
-  const [activeTab, setActiveTab] = useState('chat');
-  const [saveStatus, setSaveStatus] = useState(null);
-  const [isListening, setIsListening] = useState(false);
-  const [micSupported] = useState(() => !!speechService.recognition);
+const PERSONA_META = {
+  'gentle-guide':    { label: 'Gentle Guide',    color: '#C4956A',
+                       gradient: 'linear-gradient(135deg,#FFF8F0,#FFF3E0)' },
+  'fellow-traveler': { label: 'Fellow Traveler',  color: '#4A9B8E',
+                       gradient: 'linear-gradient(135deg,#F0F8F6,#E8F7F5)' },
+  'wise-old-fool':   { label: 'Wise Old Fool',    color: '#8B6BA8',
+                       gradient: 'linear-gradient(135deg,#F8F3FF,#F2EBFF)' },
+};
+
+export default function ChatWindow({ setupData }) {
+  const { userId, name, faithLens, persona: initialPersona } = setupData;
+
+  const [selectedPersona, setSelectedPersona] = useState(initialPersona || 'gentle-guide');
+  const [messages,        setMessages]        = useState([]);
+  const [inputText,       setInputText]       = useState('');
+  const [isLoading,       setIsLoading]       = useState(false);
+  const [diaryEntries,    setDiaryEntries]    = useState([]);
+  const [activeTab,       setActiveTab]       = useState('chat');
+  const [saveStatus,      setSaveStatus]      = useState(null);
+  const [closingRitual,   setClosingRitual]   = useState(null);
+  const [isListening,     setIsListening]     = useState(false);
+
   const messagesEndRef = useRef(null);
-  const textareaRef = useRef(null);
+  const textareaRef    = useRef(null);
+  const speechRef      = useRef(null);
+
+  // Lazy-init speech recognition
+  useEffect(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.continuous    = false;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      setIsListening(false);
+      setInputText(prev => prev ? prev + ' ' + transcript : transcript);
+      textareaRef.current?.focus();
+    };
+    rec.onerror = () => setIsListening(false);
+    rec.onend   = () => setIsListening(false);
+    speechRef.current = rec;
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  useEffect(() => {
-    if (!speechService.recognition) return;
-
-    speechService.onResult((transcript) => {
-      setIsListening(false);
-      setInputText(prev => prev ? prev + ' ' + transcript : transcript);
-      textareaRef.current?.focus();
-    });
-
-    speechService.onError(() => {
-      setIsListening(false);
-    });
-  }, []);
-
   const handleMicClick = () => {
+    if (!speechRef.current) return;
     if (isListening) {
-      speechService.stopListening();
+      speechRef.current.stop();
       setIsListening(false);
     } else {
       setIsListening(true);
-      speechService.startListening();
+      speechRef.current.start();
     }
   };
 
-  const handleBeginSession = async () => {
-    if (!tempName.trim()) {
-      setWelcomeError('Please enter your name.');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!tempEmail.trim() || !emailRegex.test(tempEmail)) {
-      setWelcomeError('Please enter a valid email address.');
-      return;
-    }
-
-    setIsRegistering(true);
-    setWelcomeError('');
-
-    try {
-      const response = await fetch(`${API_URL}/api/register-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tempName.trim(), email: tempEmail.trim() }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Registration failed');
-      setUserId(data.userId);
-    } catch (err) {
-      console.error('Registration error:', err);
-      setWelcomeError('Something went wrong. Please try again.');
-      setIsRegistering(false);
-    }
-  };
-
-  if (!userId) {
-    return (
-      <div className="cw-welcome-screen">
-        <div className="cw-welcome-card">
-          <div className="cw-logo-mark">✦</div>
-          <h1 className="cw-welcome-title">
-            <span className="cw-name-narrative">narrative</span>
-            <span className="cw-name-first">First</span>
-          </h1>
-          <p className="cw-welcome-subtitle">
-            A space to think out loud, reflect, and find your way through.
-          </p>
-          <input
-            type="text"
-            value={tempName}
-            onChange={(e) => { setTempName(e.target.value); setWelcomeError(''); }}
-            onKeyDown={(e) => e.key === 'Enter' && handleBeginSession()}
-            placeholder="Your name"
-            className="cw-welcome-input"
-            autoFocus
-          />
-          <input
-            type="email"
-            value={tempEmail}
-            onChange={(e) => { setTempEmail(e.target.value); setWelcomeError(''); }}
-            onKeyDown={(e) => e.key === 'Enter' && handleBeginSession()}
-            placeholder="Your email"
-            className="cw-welcome-input"
-          />
-          {welcomeError && <p className="cw-welcome-error">{welcomeError}</p>}
-          <button onClick={handleBeginSession} disabled={isRegistering} className="cw-welcome-btn">
-            {isRegistering ? 'Starting...' : 'Begin Session'}
-          </button>
-          <p className="cw-welcome-note">Beta version · Your session is private</p>
-        </div>
-      </div>
-    );
-  }
-
-  const sendMessage = async () => {
+  const sendMessage = useCallback(async () => {
     if (!inputText.trim() || isLoading) return;
-
     const userMessage = { role: 'user', content: inputText };
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
-
     try {
-      const response = await fetch(`${API_URL}/api/chat`, {
+      const res = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: inputText, persona: selectedPersona, userId })
+        body: JSON.stringify({
+          message: inputText,
+          persona: selectedPersona,
+          userId,
+          faithLens,          // passed to backend — no DB write, prompt modifier only
+        }),
       });
-      const data = await response.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response || data.message }]);
-    } catch (error) {
-      console.error('Error:', error);
-      setMessages(prev => [...prev, { role: 'assistant', content: "Something went wrong. Please try again." }]);
+      const data = await res.json();
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.response || data.message,
+      }]);
+    } catch {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Something went wrong. Please try again.',
+      }]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [inputText, isLoading, selectedPersona, userId, faithLens]);
 
   const saveToDiary = async () => {
     if (messages.length === 0) return;
     setSaveStatus('saving');
-
     try {
       const conversationText = messages
         .slice(-10)
-        .map(msg => `${msg.role}: ${msg.content}`)
+        .map(m => `${m.role}: ${m.content}`)
         .join('\n\n');
-
-      const response = await fetch(`${API_URL}/api/crystallize`, {
+      const res  = await fetch(`${API_URL}/api/crystallize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: conversationText })
+        body: JSON.stringify({ text: conversationText }),
       });
-      const data = await response.json();
-
-      setDiaryEntries(prev => [{
-        narrative: data.narrative,
+      const data = await res.json();
+      const entry = {
+        narrative:       data.narrative,
         microCommitment: data.microCommitment,
-        timestamp: new Date().toISOString(),
-        persona: selectedPersona,
-      }, ...prev]);
-
+        timestamp:       new Date().toISOString(),
+        persona:         selectedPersona,
+      };
+      setDiaryEntries(prev => [entry, ...prev]);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus(null), 3000);
-    } catch (error) {
-      console.error('Error saving to diary:', error);
+      // Trigger closing ritual overlay
+      setClosingRitual(entry);
+    } catch {
       setSaveStatus('error');
       setTimeout(() => setSaveStatus(null), 3000);
     }
   };
 
-  const personaLabels = {
-    'gentle-guide': 'Gentle Guide',
-    'fellow-traveler': 'Fellow Traveler',
-    'wise-old-fool': 'Wise Old Fool',
-  };
-
-  const personas = [
-    { value: 'gentle-guide', label: 'Gentle Guide' },
-    { value: 'fellow-traveler', label: 'Fellow Traveler' },
-    { value: 'wise-old-fool', label: 'Wise Old Fool' },
-  ];
+  const personaMeta  = PERSONA_META[selectedPersona] || PERSONA_META['gentle-guide'];
+  const micSupported = !!( window.SpeechRecognition || window.webkitSpeechRecognition );
 
   return (
-    <div className="cw-shell">
-      <header className="cw-header">
-        <div className="cw-header-left">
-          <span className="cw-logo-mark-sm">✦</span>
-          <span className="cw-header-title">
-            <span className="cw-name-narrative-sm">narrative</span>
-            <span className="cw-name-first-sm">First</span>
-          </span>
-        </div>
-        <div className="cw-header-right">
-          <select
-            value={selectedPersona}
-            onChange={(e) => setSelectedPersona(e.target.value)}
-            className="cw-persona-select"
-          >
-            {personas.map(p => (
-              <option key={p.value} value={p.value}>{p.label}</option>
-            ))}
-          </select>
-        </div>
-      </header>
-
-      <div className="cw-persona-badge">
-        Speaking with: <strong>{personaLabels[selectedPersona]}</strong>
-        {selectedPersona === 'wise-old-fool' && <span className="cw-badge-tag">New</span>}
-      </div>
-
-      <nav className="cw-tabs">
-        <button
-          className={`cw-tab ${activeTab === 'chat' ? 'cw-tab--active' : ''}`}
-          onClick={() => setActiveTab('chat')}
-        >
-          Conversation
-        </button>
-        <button
-          className={`cw-tab ${activeTab === 'diary' ? 'cw-tab--active' : ''}`}
-          onClick={() => setActiveTab('diary')}
-        >
-          Diary {diaryEntries.length > 0 && <span className="cw-tab-count">{diaryEntries.length}</span>}
-        </button>
-      </nav>
-
-      {activeTab === 'chat' && (
-        <div className="cw-chat-panel">
-          <div className="cw-messages">
-            {messages.length === 0 && (
-              <div className="cw-empty-state">
-                <p>This is your space. Start wherever feels right.</p>
-              </div>
-            )}
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`cw-message cw-message--${msg.role}`}>
-                <div className="cw-bubble">{msg.content}</div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="cw-message cw-message--assistant">
-                <div className="cw-bubble cw-bubble--loading">
-                  <span></span><span></span><span></span>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="cw-input-area">
-            <div className="cw-input-row">
-              {micSupported && (
-                <button
-                  onClick={handleMicClick}
-                  className={`cw-mic-btn ${isListening ? 'cw-mic-btn--active' : ''}`}
-                  aria-label={isListening ? 'Stop listening' : 'Speak your message'}
-                  title={isListening ? 'Tap to stop' : 'Tap to speak'}
-                >
-                  {isListening ? '⏹' : '🎙'}
-                </button>
-              )}
-              <textarea
-                ref={textareaRef}
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
-                placeholder={isListening ? 'Listening...' : 'Type or speak your message...'}
-                className={`cw-textarea ${isListening ? 'cw-textarea--listening' : ''}`}
-                rows={1}
-              />
-              <button
-                onClick={sendMessage}
-                disabled={isLoading || !inputText.trim()}
-                className="cw-send-btn"
-                aria-label="Send"
-              >
-                ↑
-              </button>
-            </div>
-            <button
-              onClick={saveToDiary}
-              disabled={messages.length === 0 || saveStatus === 'saving'}
-              className={`cw-save-btn ${saveStatus === 'saved' ? 'cw-save-btn--success' : ''} ${saveStatus === 'error' ? 'cw-save-btn--error' : ''}`}
-            >
-              {saveStatus === 'saving' && 'Saving...'}
-              {saveStatus === 'saved' && '✓ Saved to Diary'}
-              {saveStatus === 'error' && 'Save failed — try again'}
-              {!saveStatus && '💾 Save to Diary'}
+    <>
+      {/* ── Closing ritual overlay ── */}
+      {closingRitual && (
+        <div className="cw-ritual-overlay" onClick={() => setClosingRitual(null)}>
+          <div className="cw-ritual-card" onClick={e => e.stopPropagation()}>
+            <p className="cw-ritual-eyebrow">You showed up today.</p>
+            <p className="cw-ritual-label">You committed to one thing:</p>
+            <p className="cw-ritual-commitment">{closingRitual.microCommitment}</p>
+            <button className="cw-ritual-close" onClick={() => setClosingRitual(null)}>
+              Continue
             </button>
           </div>
         </div>
       )}
 
-      {activeTab === 'diary' && (
-        <div className="cw-diary-panel">
-          {diaryEntries.length === 0 ? (
-            <div className="cw-empty-state">
-              <p>Your diary entries will appear here after you save a conversation.</p>
-            </div>
-          ) : (
-            <div className="cw-diary-list">
-              {diaryEntries.map((entry, idx) => (
-                <div key={idx} className="cw-diary-entry">
-                  <div className="cw-diary-meta">
-                    <span className="cw-diary-date">{new Date(entry.timestamp).toLocaleString()}</span>
-                    <span className="cw-diary-persona">{personaLabels[entry.persona] || entry.persona}</span>
-                  </div>
-                  <div className="cw-diary-section">
-                    <p className="cw-diary-label">Narrative</p>
-                    <p className="cw-diary-text">{entry.narrative}</p>
-                  </div>
-                  <div className="cw-diary-section">
-                    <p className="cw-diary-label">Reflection</p>
-                    <p className="cw-diary-text">{entry.microCommitment}</p>
-                  </div>
-                </div>
+      <div className="cw-shell">
+        {/* Header */}
+        <header className="cw-header">
+          <div className="cw-header-left">
+            <span className="cw-logo-mark-sm">✦</span>
+            <span className="cw-header-title">
+              <span className="cw-name-narrative-sm">narrative</span>
+              <span className="cw-name-first-sm">First</span>
+            </span>
+          </div>
+          <div className="cw-header-right">
+            <select
+              value={selectedPersona}
+              onChange={e => setSelectedPersona(e.target.value)}
+              className="cw-persona-select"
+            >
+              {Object.entries(PERSONA_META).map(([id, m]) => (
+                <option key={id} value={id}>{m.label}</option>
               ))}
-            </div>
+            </select>
+          </div>
+        </header>
+
+        {/* Persona + faith badge */}
+        <div className="cw-persona-badge">
+          Speaking with: <strong>{personaMeta.label}</strong>
+          {faithLens && <span className="cw-faith-tag">Faith lens on</span>}
+          {selectedPersona === 'wise-old-fool' && !faithLens && (
+            <span className="cw-badge-tag">New</span>
           )}
         </div>
-      )}
-    </div>
+
+        {/* Tabs */}
+        <nav className="cw-tabs">
+          <button
+            className={`cw-tab ${activeTab === 'chat'  ? 'cw-tab--active' : ''}`}
+            onClick={() => setActiveTab('chat')}
+          >Conversation</button>
+          <button
+            className={`cw-tab ${activeTab === 'diary' ? 'cw-tab--active' : ''}`}
+            onClick={() => setActiveTab('diary')}
+          >
+            Diary
+            {diaryEntries.length > 0 && (
+              <span className="cw-tab-count">{diaryEntries.length}</span>
+            )}
+          </button>
+        </nav>
+
+        {/* ── Chat panel ── */}
+        {activeTab === 'chat' && (
+          <div className="cw-chat-panel">
+            <div className="cw-messages">
+              {messages.length === 0 && (
+                <div className="cw-empty-state">
+                  <p>Hey {name}. This is your space. Start wherever feels right.</p>
+                </div>
+              )}
+
+              {messages.map((msg, idx) => (
+                <div key={idx} className={`cw-message cw-message--${msg.role}`}>
+                  <div className="cw-bubble">{msg.content}</div>
+                  {msg.role === 'assistant' && (
+                    <button
+                      className="cw-tts-btn"
+                      onClick={() => speakMessage(msg.content, selectedPersona)}
+                      title="Listen (coming soon)"
+                      aria-label="Read aloud"
+                    >
+                      🔊
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {isLoading && (
+                <div className="cw-message cw-message--assistant">
+                  <div className="cw-bubble cw-bubble--loading">
+                    <span /><span /><span />
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="cw-input-area">
+              <div className="cw-input-row">
+                {micSupported && (
+                  <button
+                    className={`cw-mic-btn ${isListening ? 'cw-mic-btn--active' : ''}`}
+                    onClick={handleMicClick}
+                    aria-label={isListening ? 'Stop' : 'Speak'}
+                  >
+                    {isListening ? '⏹' : '🎙'}
+                  </button>
+                )}
+                <textarea
+                  ref={textareaRef}
+                  value={inputText}
+                  onChange={e => setInputText(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  placeholder={isListening ? 'Listening…' : 'Type or speak your message…'}
+                  className={`cw-textarea ${isListening ? 'cw-textarea--listening' : ''}`}
+                  rows={1}
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={isLoading || !inputText.trim()}
+                  className="cw-send-btn"
+                  aria-label="Send"
+                >↑</button>
+              </div>
+
+              <button
+                onClick={saveToDiary}
+                disabled={messages.length === 0 || saveStatus === 'saving'}
+                className={`cw-save-btn
+                  ${saveStatus === 'saved'  ? 'cw-save-btn--success' : ''}
+                  ${saveStatus === 'error'  ? 'cw-save-btn--error'   : ''}`}
+              >
+                {saveStatus === 'saving' && 'Saving…'}
+                {saveStatus === 'saved'  && '✓ Saved to Diary'}
+                {saveStatus === 'error'  && 'Save failed — try again'}
+                {!saveStatus             && '💾 Save to Diary'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Diary panel ── */}
+        {activeTab === 'diary' && (
+          <div className="cw-diary-panel">
+            {diaryEntries.length === 0 ? (
+              <div className="cw-empty-state">
+                <p>Your diary entries will appear here after you save a conversation.</p>
+              </div>
+            ) : (
+              <div className="cw-diary-list">
+                {diaryEntries.map((entry, idx) => {
+                  const meta = PERSONA_META[entry.persona] || PERSONA_META['gentle-guide'];
+                  return (
+                    <div
+                      key={idx}
+                      className="cw-diary-entry"
+                      style={{
+                        background:  meta.gradient,
+                        borderLeftColor: meta.color,
+                      }}
+                    >
+                      <div className="cw-diary-meta">
+                        <span className="cw-diary-date">
+                          {new Date(entry.timestamp).toLocaleString()}
+                        </span>
+                        <span
+                          className="cw-diary-persona"
+                          style={{ color: meta.color, background: `${meta.color}18` }}
+                        >
+                          {meta.label}
+                        </span>
+                      </div>
+
+                      <div className="cw-diary-section">
+                        <p className="cw-diary-label">Narrative</p>
+                        <p className="cw-diary-text">{entry.narrative}</p>
+                      </div>
+                      <div className="cw-diary-section">
+                        <p className="cw-diary-label">Reflection</p>
+                        <p className="cw-diary-text">{entry.microCommitment}</p>
+                      </div>
+
+                      <div className="cw-diary-wordmark">
+                        <span className="cw-diary-wm-n">narrative</span>
+                        <span className="cw-diary-wm-f">First</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
-
-export default ChatWindow;
