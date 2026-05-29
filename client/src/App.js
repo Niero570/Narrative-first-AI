@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import SplashScreen from './components/SplashScreen';
-import SetupFlow    from './components/SetupFlow';
-import ChatWindow   from './components/ChatWindow';
-import API_URL      from './config';
+import SplashScreen  from './components/SplashScreen';
+import LandingPage   from './components/LandingPage';
+import SetupFlow     from './components/SetupFlow';
+import ChatWindow    from './components/ChatWindow';
+import API_URL       from './config';
 import './App.css';
 
 function App() {
-  const [splashDone, setSplashDone] = useState(false);
-  const [setupData,  setSetupData]  = useState(null);
-  const [checking,   setChecking]   = useState(true);
+  const [splashDone,   setSplashDone]   = useState(false);
+  const [landingDone,  setLandingDone]  = useState(false);
+  const [setupData,    setSetupData]    = useState(null);
+  const [checking,     setChecking]     = useState(true);
 
   // On mount: verify stored JWT and restore session
   useEffect(() => {
@@ -53,8 +55,9 @@ function App() {
     restoreSession();
   }, []);
 
-  if (checking) return null;   // brief flicker prevention
+  if (checking)    return null;
   if (!splashDone) return <SplashScreen onComplete={() => setSplashDone(true)} />;
+  if (!setupData && !landingDone) return <LandingPage onEnter={() => setLandingDone(true)} />;
   if (!setupData)  return <SetupFlow    onComplete={setSetupData} />;
   return <ChatWindow setupData={setupData} />;
 }

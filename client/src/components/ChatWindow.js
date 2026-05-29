@@ -1,6 +1,7 @@
 import API_URL from '../config';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import PaywallModal from './PaywallModal';
+import PaywallModal   from './PaywallModal';
+import FirstTimeCard  from './FirstTimeCard';
 import './ChatWindow.css';
 
 // ─── TTS stub ────────────────────────────────────────────────────────────────
@@ -41,8 +42,9 @@ export default function ChatWindow({ setupData }) {
   const [saveStatus,      setSaveStatus]      = useState(null);
   const [closingRitual,   setClosingRitual]   = useState(null);
   const [isListening,     setIsListening]     = useState(false);
-  const [showPaywall, setShowPaywall] = useState(false);
-  const [isPremium,   setIsPremium]   = useState(initialPremium || false);  // eslint-disable-line no-unused-vars
+  const [showPaywall,    setShowPaywall]    = useState(false);
+  const [isPremium,      setIsPremium]      = useState(initialPremium || false);  // eslint-disable-line no-unused-vars
+  const [showFirstTime,  setShowFirstTime]  = useState(!localStorage.getItem('nf_seen_intro'));
 
   const messagesEndRef = useRef(null);
   const textareaRef    = useRef(null);
@@ -197,6 +199,10 @@ export default function ChatWindow({ setupData }) {
 
   return (
     <>
+      {showFirstTime && (
+        <FirstTimeCard onDismiss={() => setShowFirstTime(false)} />
+      )}
+
       {showPaywall && (
         <PaywallModal
           isPremium={isPremium}

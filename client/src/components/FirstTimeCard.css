@@ -1,0 +1,322 @@
+/* ─── Overlay ─────────────────────────────────────────────────────────────── */
+.ftc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 24, 32, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 20px;
+  animation: ftc-overlay-in 0.5s ease both;
+}
+
+@keyframes ftc-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ftc-overlay--exit {
+  animation: ftc-overlay-out 0.5s ease both;
+}
+
+@keyframes ftc-overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ─── Card ────────────────────────────────────────────────────────────────── */
+.ftc-card {
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 48px 40px 36px;
+  max-width: 440px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    0 32px 80px rgba(0, 0, 0, 0.3);
+  animation: ftc-card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes ftc-card-in {
+  from { opacity: 0; transform: translateY(32px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* Subtle top accent line */
+.ftc-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #4A9B8E, transparent);
+  border-radius: 0 0 2px 2px;
+}
+
+/* ─── Slide ───────────────────────────────────────────────────────────────── */
+.ftc-slide {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  animation: ftc-slide-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  min-height: 320px;
+  justify-content: center;
+}
+
+@keyframes ftc-slide-in {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ─── Slide 1: ✦ Mark ─────────────────────────────────────────────────────── */
+.ftc-mark-visual {
+  font-size: 3.6rem;
+  color: #4A9B8E;
+  margin-bottom: 24px;
+  line-height: 1;
+  animation: ftc-mark-pulse 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(74, 155, 142, 0.35));
+}
+
+@keyframes ftc-mark-pulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.08); opacity: 0.85; }
+}
+
+/* ─── Slide 2: Talk → Crystallize → Build loop ───────────────────────────── */
+.ftc-loop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.ftc-loop-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(135deg, #f8fdfc, #f0faf9);
+  border: 1.5px solid #d0eeea;
+  border-radius: 16px;
+  padding: 14px 20px;
+  width: 100%;
+  max-width: 280px;
+  gap: 2px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ftc-loop-step:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 155, 142, 0.12);
+}
+
+.ftc-loop-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.ftc-loop-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2c5364;
+  letter-spacing: 0.01em;
+}
+
+.ftc-loop-desc {
+  font-size: 13px;
+  color: #6b8c94;
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+.ftc-loop-arrow {
+  font-size: 1.1rem;
+  color: #4A9B8E;
+  opacity: 0.6;
+  padding: 4px 0;
+  animation: ftc-arrow-bob 1.8s ease-in-out infinite;
+}
+
+@keyframes ftc-arrow-bob {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50%       { transform: translateY(3px); opacity: 1; }
+}
+
+/* ─── Slide 3: Feature rows ──────────────────────────────────────────────── */
+.ftc-features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.ftc-feature-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 12px 16px;
+  border: 1px solid #efefef;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.ftc-feature-row:hover {
+  background: #f0faf9;
+  border-color: #c5e8e4;
+}
+
+.ftc-feature-icon {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.ftc-feature-text {
+  font-size: 14px;
+  color: #334a52;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* ─── Text ────────────────────────────────────────────────────────────────── */
+.ftc-headline {
+  font-size: 1.65rem;
+  font-weight: 300;
+  color: #1a3a4a;
+  text-align: center;
+  margin: 0 0 14px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.ftc-body {
+  font-size: 15px;
+  color: #4a6470;
+  text-align: center;
+  line-height: 1.7;
+  margin: 0 0 18px;
+  max-width: 340px;
+}
+
+.ftc-note {
+  font-size: 13px;
+  color: #8aabb4;
+  text-align: center;
+  font-style: italic;
+  margin: 0 0 28px;
+  line-height: 1.5;
+  max-width: 300px;
+}
+
+/* ─── Dots ────────────────────────────────────────────────────────────────── */
+.ftc-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.ftc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: #d8e8ec;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.25s ease;
+}
+
+.ftc-dot--active {
+  background: #4A9B8E;
+  width: 22px;
+  border-radius: 4px;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+.ftc-btn {
+  width: 100%;
+  padding: 15px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #4A9B8E 0%, #2c5364 100%);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+  margin-bottom: 10px;
+}
+
+.ftc-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.ftc-btn:active {
+  transform: translateY(0);
+}
+
+.ftc-skip {
+  background: none;
+  border: none;
+  color: #b0c4cc;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  letter-spacing: 0.04em;
+  transition: color 0.2s ease;
+}
+
+.ftc-skip:hover {
+  color: #6a8c96;
+}
+
+/* ─── Mobile ──────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .ftc-card {
+    padding: 36px 24px 28px;
+    border-radius: 22px;
+  }
+
+  .ftc-slide {
+    min-height: 280px;
+  }
+
+  .ftc-headline {
+    font-size: 1.4rem;
+  }
+
+  .ftc-mark-visual {
+    font-size: 2.8rem;
+    margin-bottom: 18px;
+  }
+
+  .ftc-loop-step {
+    max-width: 100%;
+    padding: 12px 16px;
+  }
+
+  .ftc-body {
+    font-size: 14px;
+  }
+}
