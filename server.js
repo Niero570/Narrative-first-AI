@@ -18,7 +18,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const JWT_SECRET      = process.env.JWT_SECRET      || 'nf-dev-secret-change-in-prod';
-const FREE_MESSAGES   = 20;
+const FREE_MESSAGES   = 500; // beta — effectively unlimited
 const CLIENT_URL      = process.env.CLIENT_URL       || 'http://localhost:8080';
 
 // ===== Middleware =====
