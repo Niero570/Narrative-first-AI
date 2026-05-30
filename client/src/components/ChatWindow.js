@@ -84,16 +84,21 @@ export default function ChatWindow({ setupData }) {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
     const rec = new SR();
-    rec.continuous     = false;
-    rec.interimResults = false;
+    rec.continuous     = true;   // keep listening through natural pauses
+    rec.interimResults = true;   // show words appearing in real time
     rec.onresult = (e) => {
-      setIsListening(false);
-      const t = e.results[0][0].transcript;
-      setInputText(prev => prev ? prev + ' ' + t : t);
-      textareaRef.current?.focus();
+      let finalText = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          finalText += e.results[i][0].transcript;
+        }
+      }
+      if (finalText) {
+        setInputText(prev => prev ? prev + ' ' + finalText.trim() : finalText.trim());
+      }
     };
-    rec.onerror = () => setIsListening(false);
-    rec.onend   = () => setIsListening(false);
+    rec.onerror = () => { setIsListening(false); };
+    rec.onend   = () => { setIsListening(false); };
     speechRef.current = rec;
   }, []);
 
