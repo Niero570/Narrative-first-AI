@@ -94,8 +94,8 @@ export default function LandingPage({ onEnter }) {
             <div className="lp-pillar-icon">🧭</div>
             <h3 className="lp-pillar-title">Not a chatbot. A companion.</h3>
             <p className="lp-pillar-body">
-              Three distinct voices — a gentle guide, a fellow traveler, and a
-              wise old fool — each approaching your story from a different angle.
+              Three distinct voices — a Gentle Guide, a Fellow Traveler, and a
+              Wise Old Fool — each approaching your story from a different angle.
               You choose who you need today.
             </p>
           </div>
