@@ -692,6 +692,24 @@ app.post('/api/stripe/webhook', async (req, res) => {
   res.json({ received: true });
 });
 
+// Landing page email capture — saves email only, no welcome email
+app.post('/api/subscribe', async (req, res) => {
+  const { email } = req.body || {};
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'Valid email is required.' });
+  }
+  try {
+    const existing = await Subscriber.findOne({ email: email.toLowerCase() });
+    if (!existing) {
+      await Subscriber.create({ email: email.toLowerCase(), name: '' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ subscribe error:', err);
+    res.status(500).json({ error: 'Could not save email.' });
+  }
+});
+
 // Register session — saves subscriber + sends welcome email
 app.post('/api/register-session', async (req, res) => {
   const { name, email } = req.body || {};
