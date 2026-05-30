@@ -134,7 +134,7 @@ export default function LandingPage({ onEnter }) {
           </p>
           <p className="lp-method-body">
             <span className="lp-brand">narrative<strong>First</strong></span> brings that method into a space you can return to
-            daily. No diagnosis. No clinical jargon. Just honest conversation
+            daily. No clinical jargon, no diagnosis. Just honest conversation
             and the slow meaningful work of seeing yourself more clearly.
           </p>
           <blockquote className="lp-quote">
