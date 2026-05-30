@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './SplashScreen.css';
 
 const CYCLE_WORDS = ['clarity', 'perspective', 'honesty', 'courage', 'truth'];
-const WORD_DURATION = 750;   // how long each word is shown
+const WORD_DURATION = 1200;  // how long each word is shown
 const CYCLE_START = 1800;    // wait until tagline is fully visible before cycling
 
 function SplashScreen({ onComplete }) {

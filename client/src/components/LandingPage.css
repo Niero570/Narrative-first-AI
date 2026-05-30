@@ -42,6 +42,9 @@
 .lp-n { color: #e8f0f3; font-weight: 300; }
 .lp-f { color: #4A9B8E; font-weight: 700; }
 
+.lp-brand { font-style: normal; color: inherit; }
+.lp-brand strong { color: #4A9B8E; font-weight: 700; }
+
 .lp-nav-cta {
   background: rgba(74, 155, 142, 0.12);
   border: 1px solid rgba(74, 155, 142, 0.35);

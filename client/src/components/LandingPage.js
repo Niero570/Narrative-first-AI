@@ -65,7 +65,7 @@ export default function LandingPage({ onEnter }) {
             Your story is trying<br />to tell you something.
           </h1>
           <p className="lp-subhead">
-            narrativeFirst uses real narrative therapy — the same clinical method
+            <span className="lp-brand">narrative<strong>First</strong></span> uses real narrative therapy — the same clinical method
             practiced by therapists worldwide — to help you rewrite the stories
             that are holding you back.
           </p>
@@ -79,9 +79,6 @@ export default function LandingPage({ onEnter }) {
             <span className="lp-cycle-suffix">.</span>
           </div>
 
-          <button className="lp-hero-cta" onClick={onEnter}>
-            Start your first session
-          </button>
           <p className="lp-hero-note">Free to try. No account required to begin.</p>
         </div>
       </section>
@@ -136,9 +133,9 @@ export default function LandingPage({ onEnter }) {
             the problem. The story is. And stories can be rewritten.
           </p>
           <p className="lp-method-body">
-            narrativeFirst brings that method into a space you can return to
+            <span className="lp-brand">narrative<strong>First</strong></span> brings that method into a space you can return to
             daily. No diagnosis. No clinical jargon. Just honest conversation
-            and the slow, meaningful work of seeing yourself more clearly.
+            and the slow meaningful work of seeing yourself more clearly.
           </p>
           <blockquote className="lp-quote">
             "You are not broken. Your narrative might just need a second look."
