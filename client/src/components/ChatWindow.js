@@ -143,7 +143,7 @@ export default function ChatWindow({ setupData }) {
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, isLoading, selectedPersona, userId, faithLens]);
+  }, [inputText, isLoading, selectedPersona, userId, faithLensOn]);
 
   const saveToDiary = async () => {
     if (messages.length === 0) return;
