@@ -149,20 +149,20 @@ export default function SetupFlow({ onComplete }) {
         <h2 className="sf-flow-heading">How would you like to approach your reflections?</h2>
         <div className="sf-faith-cards">
           <button
-            className={`sf-faith-card ${!faithLens ? 'sf-faith-card--selected' : ''}`}
-            onClick={() => { setFaithLens(false); setStep('persona'); }}
-          >
-            <span className="sf-faith-icon">🧠</span>
-            <strong>Open &amp; Secular</strong>
-            <span>Psychological and narrative framing</span>
-          </button>
-          <button
             className={`sf-faith-card ${faithLens ? 'sf-faith-card--selected' : ''}`}
             onClick={() => { setFaithLens(true); setStep('persona'); }}
           >
             <span className="sf-faith-icon">✝️</span>
             <strong>Faith-Anchored</strong>
             <span>Includes scripture and prayer when meaningful</span>
+          </button>
+          <button
+            className={`sf-faith-card ${!faithLens ? 'sf-faith-card--selected' : ''}`}
+            onClick={() => { setFaithLens(false); setStep('persona'); }}
+          >
+            <span className="sf-faith-icon">🧠</span>
+            <strong>Open &amp; Secular</strong>
+            <span>Psychological and narrative framing</span>
           </button>
         </div>
       </div>

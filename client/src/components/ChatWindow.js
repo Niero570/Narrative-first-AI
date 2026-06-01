@@ -32,7 +32,8 @@ export default function ChatWindow({ setupData }) {
   const { userId, name, email, faithLens, persona: initialPersona,
           isPremium: initialPremium } = setupData;
 
-  const [selectedPersona, setSelectedPersona] = useState(initialPersona || 'gentle-guide');
+  const [selectedPersona,  setSelectedPersona]  = useState(initialPersona || 'gentle-guide');
+  const [faithLensOn,      setFaithLensOn]      = useState(faithLens || false);
   const [messages,        setMessages]        = useState([]);
   const [inputText,       setInputText]       = useState('');
   const [isLoading,       setIsLoading]       = useState(false);
@@ -122,7 +123,7 @@ export default function ChatWindow({ setupData }) {
       const res = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: inputText, persona: selectedPersona, userId, faithLens }),
+        body: JSON.stringify({ message: inputText, persona: selectedPersona, userId, faithLens: faithLensOn }),
       });
 
       // Paywall response (HTTP 402)
@@ -253,8 +254,17 @@ export default function ChatWindow({ setupData }) {
 
         <div className="cw-persona-badge">
           Speaking with: <strong>{personaMeta.label}</strong>
-          {faithLens && <span className="cw-faith-tag">Faith lens on</span>}
-          {selectedPersona === 'wise-old-fool' && !faithLens && (
+          <button
+            className={`cw-faith-toggle ${faithLensOn ? 'cw-faith-toggle--on' : ''}`}
+            onClick={() => setFaithLensOn(v => !v)}
+            title={faithLensOn ? 'Faith lens on — tap to turn off' : 'Faith lens off — tap to turn on'}
+          >
+            <span className="cw-faith-toggle-track">
+              <span className="cw-faith-toggle-thumb" />
+            </span>
+            <span className="cw-faith-toggle-label">✝️ Faith lens</span>
+          </button>
+          {selectedPersona === 'wise-old-fool' && !faithLensOn && (
             <span className="cw-badge-tag">New</span>
           )}
         </div>
