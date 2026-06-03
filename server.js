@@ -627,6 +627,7 @@ app.post('/api/tts', async (req, res) => {
   if (!text || !voiceId) return res.status(400).json({ error: 'text and voiceId required' });
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
+  console.log('🔊 TTS hit — key present:', !!apiKey);
   if (!apiKey) return res.status(503).json({ error: 'TTS not configured' });
 
   try {
