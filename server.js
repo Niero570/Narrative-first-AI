@@ -619,6 +619,43 @@ app.get('/api/conversations/:userId', async (req, res) => {
 });
 
 // ───────────────────────────────────────────────────────────────
+// TEXT TO SPEECH — ElevenLabs proxy (key stays server-side)
+// ───────────────────────────────────────────────────────────────
+
+app.post('/api/tts', async (req, res) => {
+  const { text, voiceId } = req.body || {};
+  if (!text || !voiceId) return res.status(400).json({ error: 'text and voiceId required' });
+
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'TTS not configured' });
+
+  try {
+    const elRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: 'POST',
+      headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        model_id: 'eleven_monolingual_v1',
+        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+      }),
+    });
+
+    if (!elRes.ok) {
+      const err = await elRes.text();
+      console.error('ElevenLabs error:', err);
+      return res.status(elRes.status).json({ error: 'TTS request failed' });
+    }
+
+    const audioBuffer = await elRes.arrayBuffer();
+    res.set('Content-Type', 'audio/mpeg');
+    res.send(Buffer.from(audioBuffer));
+  } catch (err) {
+    console.error('TTS proxy error:', err);
+    res.status(500).json({ error: 'TTS request failed' });
+  }
+});
+
+// ───────────────────────────────────────────────────────────────
 // DIARY PERSISTENCE
 // ───────────────────────────────────────────────────────────────
 

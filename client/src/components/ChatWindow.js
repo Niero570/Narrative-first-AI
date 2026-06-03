@@ -4,18 +4,31 @@ import PaywallModal   from './PaywallModal';
 import FirstTimeCard  from './FirstTimeCard';
 import './ChatWindow.css';
 
-// ─── TTS stub ────────────────────────────────────────────────────────────────
-// personaId values: 'gentle-guide' | 'fellow-traveler' | 'wise-old-fool'
-// TODO: ElevenLabs integration
-// const voiceIdMap = {
-//   'gentle-guide':    'VOICE_ID_1',
-//   'fellow-traveler': 'VOICE_ID_2',
-//   'wise-old-fool':   'VOICE_ID_3',
-// };
-// const audio = await elevenlabs.generate({ voice: voiceIdMap[personaId], text });
-// audio.play();
-function speakMessage(text, personaId) {    // eslint-disable-line no-unused-vars
-  console.log(`[TTS stub] personaId=${personaId} length=${text.length}`);
+// ─── TTS — ElevenLabs via server proxy ───────────────────────────────────────
+const VOICE_ID_MAP = {
+  'gentle-guide':    'MHCai3lSHorTNek9hB5z',
+  // 'fellow-traveler': '',   // add voice ID when ready
+  // 'wise-old-fool':   '',   // add voice ID when ready
+};
+
+async function speakMessage(text, personaId) {
+  const voiceId = VOICE_ID_MAP[personaId];
+  if (!voiceId) return;
+  try {
+    const res = await fetch(`${API_URL}/api/tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voiceId }),
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play();
+    audio.onended = () => URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('TTS playback error:', err);
+  }
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
