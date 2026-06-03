@@ -10,26 +10,6 @@ const VOICE_ID_MAP = {
   // 'fellow-traveler': '',   // add voice ID when ready
   // 'wise-old-fool':   '',   // add voice ID when ready
 };
-
-async function speakMessage(text, personaId) {
-  const voiceId = VOICE_ID_MAP[personaId];
-  if (!voiceId) return;
-  try {
-    const res = await fetch(`${API_URL}/api/tts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, voiceId }),
-    });
-    if (!res.ok) return;
-    const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.play();
-    audio.onended = () => URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error('TTS playback error:', err);
-  }
-}
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PERSONA_META = {
@@ -60,9 +40,10 @@ export default function ChatWindow({ setupData }) {
   const [isPremium,      setIsPremium]      = useState(initialPremium || false);  // eslint-disable-line no-unused-vars
   const [showFirstTime,  setShowFirstTime]  = useState(!localStorage.getItem('nf_seen_intro'));
 
-  const messagesEndRef = useRef(null);
-  const textareaRef    = useRef(null);
-  const speechRef      = useRef(null);
+  const messagesEndRef  = useRef(null);
+  const textareaRef     = useRef(null);
+  const speechRef       = useRef(null);
+  const audioCtxRef     = useRef(null);
 
   // Load conversation history and diary entries on mount
   useEffect(() => {
@@ -125,6 +106,35 @@ export default function ChatWindow({ setupData }) {
     if (isListening) { speechRef.current.stop(); setIsListening(false); }
     else             { setIsListening(true); speechRef.current.start(); }
   };
+
+  // speakMessage lives inside the component so it can use audioCtxRef.
+  // AudioContext is created synchronously on tap — required for mobile autoplay policy.
+  const speakMessage = useCallback(async (text, personaId) => {
+    const voiceId = VOICE_ID_MAP[personaId];
+    if (!voiceId) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!audioCtxRef.current) audioCtxRef.current = new AC();
+      const audioCtx = audioCtxRef.current;
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+      const res = await fetch(`${API_URL}/api/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voiceId }),
+      });
+      if (!res.ok) return;
+      const arrayBuffer = await res.arrayBuffer();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+      source.start(0);
+    } catch (err) {
+      console.error('TTS playback error:', err);
+    }
+  }, []);
 
   const sendMessage = useCallback(async () => {
     if (!inputText.trim() || isLoading) return;
