@@ -39,6 +39,8 @@ export default function ChatWindow({ setupData }) {
   const [showPaywall,    setShowPaywall]    = useState(false);
   const [isPremium,      setIsPremium]      = useState(initialPremium || false);  // eslint-disable-line no-unused-vars
   const [showFirstTime,  setShowFirstTime]  = useState(!localStorage.getItem('nf_seen_intro'));
+  const [ttsLoadingIdx,  setTtsLoadingIdx]  = useState(null);
+  const [ttsError,       setTtsError]       = useState(null);
 
   const messagesEndRef  = useRef(null);
   const textareaRef     = useRef(null);
@@ -107,14 +109,14 @@ export default function ChatWindow({ setupData }) {
     else             { setIsListening(true); speechRef.current.start(); }
   };
 
-  // speakMessage lives inside the component so it can use audioCtxRef.
-  // AudioContext is created synchronously on tap — required for mobile autoplay policy.
-  const speakMessage = useCallback(async (text, personaId) => {
+  const speakMessage = useCallback(async (text, personaId, idx) => {
     const voiceId = VOICE_ID_MAP[personaId];
     if (!voiceId) return;
+    setTtsLoadingIdx(idx);
+    setTtsError(null);
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
+      if (!AC) { setTtsError('Audio not supported'); setTtsLoadingIdx(null); return; }
       if (!audioCtxRef.current) audioCtxRef.current = new AC();
       const audioCtx = audioCtxRef.current;
       if (audioCtx.state === 'suspended') await audioCtx.resume();
@@ -124,15 +126,23 @@ export default function ChatWindow({ setupData }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, voiceId }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setTtsError(err.error || `Error ${res.status}`);
+        setTtsLoadingIdx(null);
+        return;
+      }
       const arrayBuffer = await res.arrayBuffer();
       const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
       const source = audioCtx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(audioCtx.destination);
       source.start(0);
+      source.onended = () => setTtsLoadingIdx(null);
     } catch (err) {
       console.error('TTS playback error:', err);
+      setTtsError(err.message);
+      setTtsLoadingIdx(null);
     }
   }, []);
 
@@ -312,13 +322,21 @@ export default function ChatWindow({ setupData }) {
                 </div>
               ) : null}
 
+              {ttsError && (
+                <div className="cw-tts-error">🔊 {ttsError}</div>
+              )}
+
               {messages.map((msg, idx) => (
                 <div key={idx} className={`cw-message cw-message--${msg.role}`}>
                   <div className="cw-bubble">{msg.content}</div>
-                  {msg.role === 'assistant' && (
-                    <button className="cw-tts-btn"
-                      onClick={() => speakMessage(msg.content, selectedPersona)}
-                      title="Listen (coming soon)" aria-label="Read aloud">🔊</button>
+                  {msg.role === 'assistant' && VOICE_ID_MAP[selectedPersona] && (
+                    <button
+                      className={`cw-tts-btn ${ttsLoadingIdx === idx ? 'cw-tts-btn--loading' : ''}`}
+                      onClick={() => speakMessage(msg.content, selectedPersona, idx)}
+                      disabled={ttsLoadingIdx !== null}
+                      aria-label="Read aloud">
+                      {ttsLoadingIdx === idx ? '…' : '🔊'}
+                    </button>
                   )}
                 </div>
               ))}
