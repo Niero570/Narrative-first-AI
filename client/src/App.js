@@ -3,8 +3,12 @@ import SplashScreen  from './components/SplashScreen';
 import LandingPage   from './components/LandingPage';
 import SetupFlow     from './components/SetupFlow';
 import ChatWindow    from './components/ChatWindow';
+import ScriptureMap  from './ScriptureMap/ScriptureMap';
 import API_URL       from './config';
 import './App.css';
+
+// Allow direct access to the Scripture Map via ?map=true in the URL
+const IS_MAP_ROUTE = new URLSearchParams(window.location.search).get('map') === 'true';
 
 function App() {
   const [splashDone,   setSplashDone]   = useState(false);
@@ -55,6 +59,7 @@ function App() {
     restoreSession();
   }, []);
 
+  if (IS_MAP_ROUTE) return <ScriptureMap apiBaseUrl={API_URL} />;
   if (checking)    return null;
   if (!splashDone) return <SplashScreen onComplete={() => setSplashDone(true)} />;
   if (!setupData && !landingDone) return <LandingPage onEnter={() => setLandingDone(true)} />;
