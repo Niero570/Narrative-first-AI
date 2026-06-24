@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { MAP_CLUSTER_COLORS } from "../theme/celestial";
 
 // Galaxy background — save the Aron Visuals Unsplash photo as:

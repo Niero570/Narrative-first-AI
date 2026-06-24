@@ -2,8 +2,60 @@ import { useState } from "react";
 import {
   CATEGORIES, CROSS_FILL, CROSS_GLOW, CROSS_RING,
   RED_LETTER_FILL, RED_LETTER_GLOW, RED_LETTER_BG,
-  CARD_BG,
+  CARD_BG, DOVE,
 } from "../theme/celestial";
+
+// Compact category/cross/red-letter badge — shared by detail + journey views
+function NodeBadge({ node, cat, glow, fill }) {
+  const isCross = !!node.isCross;
+  const isRedLetter = !!node.redLetter;
+  if (isCross) {
+    return (
+      <div style={{
+        display: "inline-block", fontSize: 9, fontWeight: 800, letterSpacing: "0.12em",
+        color: CROSS_RING, background: "#1A1000", borderRadius: 5, padding: "3px 8px",
+      }}>✝ THE CROSS · CENTER OF ALL THINGS</div>
+    );
+  }
+  if (isRedLetter) {
+    return (
+      <div style={{
+        display: "inline-block", fontSize: 9, fontWeight: 800, letterSpacing: "0.12em",
+        color: RED_LETTER_FILL, background: RED_LETTER_BG, borderRadius: 5, padding: "3px 8px",
+      }}>🔴 WORDS OF JESUS</div>
+    );
+  }
+  if (cat.label) {
+    return (
+      <div style={{
+        display: "inline-block", fontSize: 9, fontWeight: 800, letterSpacing: "0.12em",
+        color: glow, background: fill + "22", borderRadius: 5, padding: "3px 8px",
+      }}>{cat.icon} {cat.label.toUpperCase()}</div>
+    );
+  }
+  return null;
+}
+
+// Compact KJV/ESV/NKJV toggle — shared by detail + journey views
+function TranslationToggle({ value, onChange, glow }) {
+  return (
+    <div style={{ display: "flex", gap: 2, background: "#040608", borderRadius: 8, padding: 2, flexShrink: 0 }}>
+      {Object.entries(TRANSLATIONS).map(([key, t]) => (
+        <button
+          key={key}
+          onClick={() => onChange(key)}
+          style={{
+            padding: "3px 8px", border: "none", borderRadius: 6, cursor: "pointer",
+            fontSize: 9, fontWeight: 800,
+            background: value === key ? glow + "AA" : "transparent",
+            color: value === key ? "#fff" : "#475569",
+            transition: "all 0.15s",
+          }}
+        >{t.label}</button>
+      ))}
+    </div>
+  );
+}
 
 const TRANSLATIONS = {
   KJV:  { label: "KJV",  full: "King James Version" },
@@ -85,11 +137,13 @@ export default function NodeDetail({
   pathToCrossActive,
   ttsAvailable = false,
   onDeclare,
+  journey = null,
+  onBeginJourney,
 }) {
   const [translation, setTranslation] = useState("KJV");
   const [showStrongs, setShowStrongs] = useState(false);
 
-  if (!node) return <EmptyPanel />;
+  if (!node) return <EmptyPanel onBeginJourney={onBeginJourney} />;
 
   const isCross = !!node.isCross;
   const isRedLetter = !!node.redLetter;
@@ -104,6 +158,131 @@ export default function NodeDetail({
   const connectedNodes = (node.connections || [])
     .map(id => allNodes.find(n => n.id === id))
     .filter(Boolean);
+
+  // ── JOURNEY VIEW — the dove has landed here; show verse + why it connects ──
+  if (journey?.active) {
+    const atCross = isCross;
+    const ctrlBase = {
+      flex: "1 1 auto", padding: "9px 8px", borderRadius: 9, cursor: "pointer",
+      fontSize: 10, fontWeight: 800, letterSpacing: "0.06em", transition: "all 0.2s",
+      fontFamily: "'Inter', sans-serif",
+    };
+    return (
+      <div style={{
+        background: bg, border: `1px solid ${border}44`, borderRadius: 14, padding: 18,
+        height: "100%", overflowY: "auto", boxSizing: "border-box",
+        fontFamily: "'Inter', sans-serif", display: "flex", flexDirection: "column",
+      }}>
+        {/* Journey header + step counter */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 11 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span style={{ fontSize: 16 }}>🕊</span>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.18em", color: DOVE.glow }}>
+              THE JOURNEY
+            </span>
+          </div>
+          <span style={{ fontSize: 12, fontWeight: 800, color: "#94A3B8", fontFamily: "'Cinzel', serif" }}>
+            {journey.step + 1}<span style={{ color: "#334155" }}> / {journey.total}</span>
+          </span>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{ height: 3, background: "#1E293B", borderRadius: 2, marginBottom: 16, overflow: "hidden" }}>
+          <div style={{
+            height: "100%", width: `${((journey.step + 1) / journey.total) * 100}%`,
+            background: `linear-gradient(90deg, ${DOVE.glow}, ${CROSS_RING})`,
+            borderRadius: 2, transition: "width 0.7s ease",
+          }} />
+        </div>
+
+        {/* Badge + translation toggle */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
+          <NodeBadge node={node} cat={cat} glow={glow} fill={fill} />
+          <TranslationToggle value={translation} onChange={setTranslation} glow={glow} />
+        </div>
+
+        {/* Verse reference */}
+        <h2 style={{
+          margin: "0 0 10px", fontSize: 17, fontWeight: 700,
+          color: isCross ? CROSS_RING : glow, fontFamily: "'Cinzel', serif", letterSpacing: "0.05em",
+        }}>{node.ref}</h2>
+
+        {/* Verse text */}
+        <blockquote style={{
+          margin: "0 0 16px", padding: "10px 14px", borderLeft: `3px solid ${border}`,
+          background: isRedLetter ? "#1A030888" : "#04060888", borderRadius: "0 8px 8px 0",
+          fontSize: 12.5, lineHeight: 1.75, fontStyle: "italic",
+          color: isRedLetter ? RED_LETTER_GLOW : "#CBD5E1", fontFamily: "'Lora', serif",
+        }}>
+          "{verseText}"
+        </blockquote>
+
+        {/* Why this connects — the journey note */}
+        <div style={{
+          padding: "12px 14px", background: "#0A0C18",
+          border: `1px solid ${DOVE.glow}22`, borderRadius: 10,
+        }}>
+          <div style={{
+            fontSize: 9, fontWeight: 800, letterSpacing: "0.14em", color: DOVE.glow,
+            marginBottom: 6, display: "flex", alignItems: "center", gap: 5,
+          }}>
+            ✦ {atCross ? "ALL THINGS CONVERGE" : journey.step === 0 ? "WHERE THE JOURNEY BEGINS" : "WHY THIS CONNECTS"}
+          </div>
+          <p style={{
+            margin: 0, fontSize: 12.5, lineHeight: 1.7, fontStyle: "italic",
+            color: "#E2E8F0", fontFamily: "'Lora', serif",
+          }}>
+            {journey.note}
+          </p>
+        </div>
+
+        {/* Declare (optional, keeps TTS reachable mid-journey) */}
+        {ttsAvailable && (
+          <button
+            onClick={() => onDeclare && onDeclare(verseText, node.ref)}
+            style={{
+              marginTop: 12, padding: "7px 10px", border: `1px solid ${glow}44`, borderRadius: 8,
+              background: "transparent", color: glow, cursor: "pointer",
+              fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
+            }}
+          >🔊 DECLARE THIS</button>
+        )}
+
+        <div style={{ flex: 1, minHeight: 16 }} />
+
+        {/* Controls */}
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            onClick={journey.paused ? journey.onResume : journey.onPause}
+            style={{
+              ...ctrlBase,
+              border: `1px solid ${DOVE.glow}55`,
+              background: journey.paused ? `${DOVE.glow}22` : "transparent",
+              color: DOVE.glow,
+            }}
+          >{journey.paused ? "▶ RESUME" : "⏸ PAUSE"}</button>
+          <button
+            onClick={journey.onNext}
+            disabled={atCross}
+            style={{
+              ...ctrlBase,
+              border: `1px solid ${atCross ? "#1E293B" : CROSS_RING + "55"}`,
+              background: "transparent",
+              color: atCross ? "#1E293B" : CROSS_RING,
+              cursor: atCross ? "default" : "pointer",
+            }}
+          >NEXT ▸</button>
+          <button
+            onClick={journey.onExit}
+            style={{
+              ...ctrlBase, flex: "0 0 auto", padding: "9px 12px",
+              border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "#64748B",
+            }}
+          >✕ EXIT</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -199,6 +378,22 @@ export default function NodeDetail({
       <div style={{ fontSize: 9, color: "#334155", fontWeight: 600, marginBottom: 12, letterSpacing: "0.12em" }}>
         {TRANSLATIONS[translation].full}
       </div>
+
+      {/* Begin Journey — the dove sets out from here */}
+      {onBeginJourney && (
+        <button
+          onClick={onBeginJourney}
+          style={{
+            width: "100%", marginBottom: 8, padding: "9px 10px",
+            border: `1px solid ${DOVE.glow}55`, borderRadius: 9,
+            background: `linear-gradient(90deg, ${DOVE.glow}1A, transparent)`,
+            color: DOVE.glow, cursor: "pointer",
+            fontSize: 11, fontWeight: 800, letterSpacing: "0.1em",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            transition: "all 0.2s",
+          }}
+        >🕊 BEGIN JOURNEY</button>
+      )}
 
       {/* Action buttons */}
       <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
@@ -354,7 +549,7 @@ export default function NodeDetail({
   );
 }
 
-function EmptyPanel() {
+function EmptyPanel({ onBeginJourney }) {
   return (
     <div style={{
       background: "#0A0C1288",
@@ -378,9 +573,23 @@ function EmptyPanel() {
         Every promise, every covenant, every prophecy — they all converge here.
         Select any node to trace its path back to the Cross.
       </p>
-      <div style={{ fontSize: 9, color: "#1E293B", letterSpacing: "0.15em" }}>
-        SELECT A SCRIPTURE TO BEGIN
-      </div>
+      {onBeginJourney ? (
+        <button
+          onClick={onBeginJourney}
+          style={{
+            padding: "9px 16px", border: `1px solid ${DOVE.glow}55`, borderRadius: 9,
+            background: `linear-gradient(90deg, ${DOVE.glow}1A, transparent)`,
+            color: DOVE.glow, cursor: "pointer",
+            fontSize: 11, fontWeight: 800, letterSpacing: "0.1em",
+            fontFamily: "'Inter', sans-serif",
+            display: "flex", alignItems: "center", gap: 7,
+          }}
+        >🕊 BEGIN THE JOURNEY</button>
+      ) : (
+        <div style={{ fontSize: 9, color: "#1E293B", letterSpacing: "0.15em" }}>
+          SELECT A SCRIPTURE TO BEGIN
+        </div>
+      )}
     </div>
   );
 }

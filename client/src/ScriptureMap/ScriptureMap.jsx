@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import GalaxyHome from "./components/GalaxyHome";
 import MapCanvas from "./components/MapCanvas";
 import NodeDetail from "./components/NodeDetail";
+import { DOVE } from "./theme/celestial";
 
 // Map data
 import { NODES as healingNodes, MAP_META as healingMeta } from "./maps/healingCovenant";
@@ -27,13 +28,26 @@ export default function ScriptureMap({ apiBaseUrl = "" }) {
   const [activeCategories, setActiveCategories] = useState(new Set());
   const [ttsLoading, setTtsLoading] = useState(false);
   const [ttsError, setTtsError] = useState(null);
+  // Dove Journey Mode
+  const [journeyActive, setJourneyActive] = useState(false);
+  const [journeyStep, setJourneyStep] = useState(0);
+  const [journeyPaused, setJourneyPaused] = useState(false);
   const audioRef = useRef(null);
+
+  const journey = currentMap ? MAPS[currentMap].meta.journey : null;
+
+  function resetJourney() {
+    setJourneyActive(false);
+    setJourneyPaused(false);
+    setJourneyStep(0);
+  }
 
   function enterMap(mapId) {
     const map = MAPS[mapId];
     setCurrentMap(mapId);
     setSelectedNode(null);
     setPathToCrossActive(false);
+    resetJourney();
     // Initialize all categories as active
     const cats = new Set(map.nodes.map(n => n.category));
     setActiveCategories(cats);
@@ -43,11 +57,38 @@ export default function ScriptureMap({ apiBaseUrl = "" }) {
     setCurrentMap(null);
     setSelectedNode(null);
     setPathToCrossActive(false);
+    resetJourney();
   }
 
   function handleSelectNode(node) {
+    // Tapping the map breaks the auto-tour and hands control back to the user
+    if (journeyActive) resetJourney();
     setSelectedNode(node);
     setPathToCrossActive(false);
+  }
+
+  // ── Journey controls ──
+  function beginJourney() {
+    if (!journey) return;
+    let startIdx = 0;
+    if (selectedNode) {
+      const i = journey.findIndex(j => j.nodeId === selectedNode.id);
+      if (i >= 0) startIdx = i;
+    }
+    setPathToCrossActive(false);
+    setJourneyPaused(false);
+    setJourneyStep(startIdx);
+    setJourneyActive(true);
+  }
+
+  function nextJourneyStep() {
+    if (!journey) return;
+    setJourneyStep(s => Math.min(s + 1, journey.length - 1));
+  }
+
+  function exitJourney() {
+    setJourneyActive(false);
+    setJourneyPaused(false);
   }
 
   function toggleCategory(cat) {
@@ -90,6 +131,27 @@ export default function ScriptureMap({ apiBaseUrl = "" }) {
       setTtsLoading(false);
     }
   }
+
+  // Keep the detail panel synced to whichever node the dove is visiting
+  useEffect(() => {
+    if (!journeyActive || !journey || !currentMap) return;
+    const stop = journey[journeyStep];
+    if (!stop) return;
+    const node = MAPS[currentMap].nodes.find(n => n.id === stop.nodeId);
+    if (node) setSelectedNode(node);
+  }, [journeyActive, journeyStep, journey, currentMap]);
+
+  // Auto-advance: dwell at each stop (travel + read), then move to the next.
+  // Stops once the dove reaches the Cross (final stop).
+  useEffect(() => {
+    if (!journeyActive || journeyPaused || !journey) return;
+    if (journeyStep >= journey.length - 1) return;
+    const t = setTimeout(
+      () => setJourneyStep(s => Math.min(s + 1, journey.length - 1)),
+      DOVE.travelMs + DOVE.pauseMs
+    );
+    return () => clearTimeout(t);
+  }, [journeyActive, journeyPaused, journeyStep, journey]);
 
   // ── GALAXY HOME ──────────────────────────────────────────────────────────────
   if (!currentMap) {
@@ -184,13 +246,17 @@ export default function ScriptureMap({ apiBaseUrl = "" }) {
           {/* MAP CANVAS */}
           <div style={{ flex: 1, position: "relative" }}>
             <MapCanvas
-              nodes={visibleNodes}
+              nodes={journeyActive ? allNodes : visibleNodes}
               selectedNode={selectedNode}
               onSelectNode={handleSelectNode}
               pathToCross={pathToCrossActive}
+              journeyActive={journeyActive}
+              journey={journey}
+              journeyStep={journeyStep}
             />
 
-            {/* Category filters — bottom overlay */}
+            {/* Category filters — bottom overlay (hidden during a journey) */}
+            {!journeyActive && (
             <div style={{
               position: "absolute",
               bottom: 14,
@@ -220,6 +286,7 @@ export default function ScriptureMap({ apiBaseUrl = "" }) {
                 );
               })}
             </div>
+            )}
           </div>
 
           {/* DETAIL PANEL — slides in when node selected */}
@@ -246,6 +313,18 @@ export default function ScriptureMap({ apiBaseUrl = "" }) {
                 pathToCrossActive={pathToCrossActive}
                 ttsAvailable={true}
                 onDeclare={handleDeclare}
+                onBeginJourney={journey ? beginJourney : null}
+                journey={journeyActive ? {
+                  active: true,
+                  step: journeyStep,
+                  total: journey.length,
+                  note: journey[journeyStep]?.note,
+                  paused: journeyPaused,
+                  onPause: () => setJourneyPaused(true),
+                  onResume: () => setJourneyPaused(false),
+                  onNext: nextJourneyStep,
+                  onExit: exitJourney,
+                } : null}
               />
             </div>
           )}

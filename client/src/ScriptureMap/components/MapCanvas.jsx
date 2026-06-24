@@ -3,8 +3,135 @@ import StarField from "./StarField";
 import {
   CATEGORIES, CROSS_FILL, CROSS_GLOW, CROSS_RING,
   RED_LETTER_FILL, RED_LETTER_GLOW,
-  OPACITY, NODE_R, ANIM,
+  OPACITY, NODE_R, ANIM, DOVE,
 } from "../theme/celestial";
+
+// Ease in/out — slow leaving a node, fast mid-flight, slow on approach
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+// ── DOVE LAYER ────────────────────────────────────────────────────────────────
+// Owns a single requestAnimationFrame loop. Drives the dove's eased position,
+// heading rotation, and a live particle trail. Renders only the dove + a handful
+// of particles, so the 60fps re-render never touches the full node graph.
+function DoveLayer({ active, target }) {
+  const [, tick] = useState(0);
+  const stateRef = useRef({
+    cur: null,        // {x, y} current dove position
+    angle: 0,         // heading in degrees
+    anim: null,       // {from, to, start, dur, angle, dist} active flight segment
+    particles: [],    // {id, x, y, born, life, r}
+    lastSpawn: 0,
+    primed: false,    // has the dove been snapped to its first node yet
+  });
+  const rafRef = useRef(null);
+  const idRef = useRef(0);
+
+  // When the journey advances, set up a new flight segment from cur -> target.
+  // The very first target after activation snaps (no fly-in from nowhere).
+  useEffect(() => {
+    if (!target) return;
+    const s = stateRef.current;
+    if (!s.primed || !s.cur) {
+      s.cur = { x: target.x, y: target.y };
+      s.anim = null;
+      s.primed = true;
+      return;
+    }
+    const from = { ...s.cur };
+    const to = { x: target.x, y: target.y };
+    const dx = to.x - from.x, dy = to.y - from.y;
+    const dist = Math.hypot(dx, dy);
+    const angle = dist > 0.01 ? (Math.atan2(dy, dx) * 180) / Math.PI : s.angle;
+    s.anim = { from, to, start: performance.now(), dur: DOVE.travelMs, angle, dist };
+    s.angle = angle;
+  }, [target]);
+
+  // The animation loop runs only while the journey is active.
+  useEffect(() => {
+    if (!active) {
+      const s = stateRef.current;
+      s.primed = false;
+      s.anim = null;
+      s.particles = [];
+      s.cur = null;
+      return;
+    }
+    const loop = (now) => {
+      const s = stateRef.current;
+      if (s.anim) {
+        const t = Math.min(1, (now - s.anim.start) / s.anim.dur);
+        const e = easeInOut(t);
+        s.cur = {
+          x: s.anim.from.x + (s.anim.to.x - s.anim.from.x) * e,
+          y: s.anim.from.y + (s.anim.to.y - s.anim.from.y) * e,
+        };
+        s.angle = s.anim.angle;
+        // Spawn trail particles at the live position while in flight
+        if (t < 1 && s.anim.dist > 1 && now - s.lastSpawn > 26) {
+          s.particles.push({
+            id: idRef.current++,
+            x: s.cur.x + (Math.random() - 0.5) * 0.7,
+            y: s.cur.y + (Math.random() - 0.5) * 0.7,
+            born: now,
+            life: 750 + Math.random() * 450,
+            r: 0.28 + Math.random() * 0.42,
+          });
+          s.lastSpawn = now;
+        }
+        if (t >= 1) s.anim = null;
+      }
+      // Decay + cull particles
+      if (s.particles.length) {
+        s.particles = s.particles.filter((p) => now - p.born < p.life);
+      }
+      tick((n) => (n + 1) % 1000000);
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [active]);
+
+  const s = stateRef.current;
+  if (!active || !s.cur) return null;
+
+  const now = performance.now();
+  const sz = DOVE.size;
+  // Top-down dove silhouette, nose pointing +x so rotation aligns with heading
+  const body = `M ${1.0 * sz} 0 Q ${0.2 * sz} ${0.3 * sz} ${-1.1 * sz} ${0.12 * sz} Q ${-1.18 * sz} 0 ${-1.1 * sz} ${-0.12 * sz} Q ${0.2 * sz} ${-0.3 * sz} ${1.0 * sz} 0 Z`;
+  const wingUpper = `M ${0.15 * sz} ${-0.08 * sz} Q ${-0.05 * sz} ${-0.95 * sz} ${-0.6 * sz} ${-1.15 * sz} Q ${-0.12 * sz} ${-0.5 * sz} ${-0.05 * sz} ${-0.06 * sz} Z`;
+  const wingLower = `M ${0.15 * sz} ${0.08 * sz} Q ${-0.05 * sz} ${0.95 * sz} ${-0.6 * sz} ${1.15 * sz} Q ${-0.12 * sz} ${0.5 * sz} ${-0.05 * sz} ${0.06 * sz} Z`;
+
+  return (
+    <g style={{ pointerEvents: "none" }}>
+      {/* Starry particle trail */}
+      {s.particles.map((p) => {
+        const age = (now - p.born) / p.life; // 0..1
+        const op = Math.max(0, 1 - age) * 0.85;
+        const r = p.r * (1 - age * 0.55);
+        return (
+          <circle key={p.id} cx={p.x} cy={p.y} r={r} fill={DOVE.trailColor} opacity={op} />
+        );
+      })}
+
+      {/* The dove */}
+      <g style={{ transform: `translate(${s.cur.x}px, ${s.cur.y}px) rotate(${s.angle}deg)` }}>
+        {/* Aura */}
+        <circle r={sz * 1.5} fill={DOVE.glow} opacity={0.16} filter="url(#dove-glow)" />
+        {/* Wings — gentle flap */}
+        <g className="dove-wings" style={{ transformOrigin: "0px 0px", animation: "doveFlap 0.5s ease-in-out infinite" }}>
+          <path d={wingUpper} fill={DOVE.fill} opacity={0.9} stroke={DOVE.wingStroke} strokeWidth={0.08} />
+          <path d={wingLower} fill={DOVE.fill} opacity={0.9} stroke={DOVE.wingStroke} strokeWidth={0.08} />
+        </g>
+        {/* Body */}
+        <path d={body} fill={DOVE.fill} filter="url(#dove-glow)" />
+        {/* Head highlight */}
+        <circle cx={sz * 0.85} cy={0} r={sz * 0.22} fill="#FFFFFF" />
+      </g>
+    </g>
+  );
+}
 
 // Builds a deduplicated edge list from node connections
 function buildEdges(nodes) {
@@ -64,7 +191,10 @@ function pathToEdgeSet(path) {
   return set;
 }
 
-export default function MapCanvas({ nodes, onSelectNode, selectedNode, pathToCross }) {
+export default function MapCanvas({
+  nodes, onSelectNode, selectedNode, pathToCross,
+  journeyActive = false, journey = null, journeyStep = 0,
+}) {
   const [visible, setVisible] = useState(new Set());
   const [crossPath, setCrossPath] = useState(null); // Set of edge keys on the lit cross-path
   const timerRef = useRef([]);
@@ -97,16 +227,28 @@ export default function MapCanvas({ nodes, onSelectNode, selectedNode, pathToCro
   const selectedIds = selectedNode
     ? new Set([selectedNode.id, ...(selectedNode.connections || [])])
     : new Set();
-  const hasSelection = selectedIds.size > 0;
+  // During a journey the dove + gold wake carry the focus, so node-selection
+  // dimming is suspended in favor of the journey-specific opacity scheme.
+  const hasSelection = !journeyActive && selectedIds.size > 0;
+
+  // Journey bookkeeping
+  const journeyIds = journeyActive && journey ? new Set(journey.map(j => j.nodeId)) : null;
+  const journeyCurrentId = journeyActive && journey ? journey[journeyStep]?.nodeId : null;
 
   function nodeOpacity(node) {
     if (!visible.has(node.id)) return 0;
+    if (journeyActive && journeyIds) {
+      if (node.id === journeyCurrentId) return OPACITY.full;
+      if (journeyIds.has(node.id)) return 0.7;
+      return 0.28;
+    }
     if (!hasSelection) return OPACITY.full;
     return selectedIds.has(node.id) ? OPACITY.full : OPACITY.dim;
   }
 
   function edgeOpacity(edge) {
     const key = [edge.from, edge.to].sort().join("--");
+    if (journeyActive) return 0.05; // graph recedes; the gold wake leads the eye
     if (crossPath && crossPath.has(key)) return 1;
     if (!hasSelection) return OPACITY.lineDefault;
     if (selectedIds.has(edge.from) && selectedIds.has(edge.to)) return OPACITY.lineActive;
@@ -137,6 +279,18 @@ export default function MapCanvas({ nodes, onSelectNode, selectedNode, pathToCro
 
   const nodeMap = {};
   nodes.forEach(n => { nodeMap[n.id] = n; });
+
+  // Journey geometry — the gold wake traces every node visited so far,
+  // and the dove flies to the current journey node.
+  const wakePoints = journeyActive && journey
+    ? journey.slice(0, journeyStep + 1)
+        .map(j => nodeMap[j.nodeId]?.position)
+        .filter(Boolean)
+    : [];
+  const wakeStr = wakePoints.map(p => `${p.x},${p.y}`).join(" ");
+  const doveTarget = journeyActive && journey
+    ? nodeMap[journeyCurrentId]?.position || null
+    : null;
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -173,6 +327,11 @@ export default function MapCanvas({ nodes, onSelectNode, selectedNode, pathToCro
             <feGaussianBlur stdDeviation="0.8" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
+          {/* Dove glow — soft indigo aura */}
+          <filter id="dove-glow" x="-150%" y="-150%" width="400%" height="400%">
+            <feGaussianBlur stdDeviation="0.7" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
           <style>{`
             @keyframes crossPulse {
               0%, 100% { r: 6.5; opacity: 0.15; }
@@ -190,8 +349,31 @@ export default function MapCanvas({ nodes, onSelectNode, selectedNode, pathToCro
               from { opacity: 0; transform: scale(0.4); }
               to { opacity: 1; transform: scale(1); }
             }
+            @keyframes doveFlap {
+              0%, 100% { transform: scaleY(1); }
+              50% { transform: scaleY(0.55); }
+            }
+            @keyframes journeyFlow {
+              to { stroke-dashoffset: -8; }
+            }
           `}</style>
         </defs>
+
+        {/* Journey wake — the gold thread of the Spirit's path so far */}
+        {journeyActive && wakePoints.length >= 2 && (
+          <polyline
+            points={wakeStr}
+            fill="none"
+            stroke={CROSS_RING}
+            strokeWidth="0.45"
+            strokeOpacity="0.85"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            strokeDasharray="3 1.4"
+            filter="url(#gold-glow)"
+            style={{ animation: "journeyFlow 1.2s linear infinite" }}
+          />
+        )}
 
         {/* Connection edges */}
         {edges.map(edge => {
@@ -319,6 +501,9 @@ export default function MapCanvas({ nodes, onSelectNode, selectedNode, pathToCro
             </g>
           );
         })}
+
+        {/* The dove — rendered last so it flies above the whole map */}
+        <DoveLayer active={journeyActive} target={doveTarget} />
       </svg>
     </div>
   );
