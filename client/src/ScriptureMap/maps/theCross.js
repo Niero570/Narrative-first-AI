@@ -11,6 +11,18 @@ export const MAP_META = {
   verseCount: 25,
   description:
     "The Cross is not one doctrine among many — it is the axis on which all of Scripture turns. Everything before it pointed to it. Everything after it flows from it. Here are the scriptures that define what happened at Calvary and why it changes everything.",
+  journey: [
+    { nodeId: "a1",     note: "God did not wait for us to be worthy — He loved us while we were yet sinners" },
+    { nodeId: "s2",     note: "Isaiah saw the Cross 700 years before it happened — this was always the plan" },
+    { nodeId: "a4",     note: "Without the shedding of blood there is no remission — this is the law of the covenant" },
+    { nodeId: "s1",     note: "One sacrifice — offered once — for all time. The temple veil is torn." },
+    { nodeId: "s4",     note: "No one took His life — He laid it down willingly. This changes everything." },
+    { nodeId: "cross",  note: "Tetelestai — it is finished, paid in full. The debt cancelled." },
+    { nodeId: "r1",     note: "The resurrection is the receipt — death could not hold what sin could not claim" },
+    { nodeId: "j_1",    note: "Justified freely — not improved, not upgraded — declared righteous" },
+    { nodeId: "red1",   note: "Redemption through His blood — we were bought back at infinite cost" },
+    { nodeId: "cross2", note: "For God so loved — the whole arc of salvation in one sentence" },
+  ],
 };
 
 export const NODES = [

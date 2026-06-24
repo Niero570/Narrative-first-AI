@@ -13,6 +13,21 @@ export const MAP_META = {
   verseCount: 45,
   description:
     "Every healing promise flows from the finished work of the Cross. Jehovah Rapha — the Lord your Healer — is not a title He earned; it is His name. These scriptures map the covenant of health that was purchased for every believer at Calvary.",
+  journey: [
+    { nodeId: "f1",    note: "Faith is the foundation — it is the substance of what God promised" },
+    { nodeId: "f2",    note: "Faith grows by hearing the Word — it cannot be manufactured" },
+    { nodeId: "w1",    note: "The Word itself is medicine: 'health to all your flesh'" },
+    { nodeId: "h1",    note: "The root of every healing promise: by His stripes you were healed" },
+    { nodeId: "h9",    note: "Peter confirms it in the new covenant — the price was paid" },
+    { nodeId: "h7",    note: "Jehovah Rapha — healing is not what He does, it is His name" },
+    { nodeId: "c1",    note: "The covenant was established before the sickness — it supersedes it" },
+    { nodeId: "c2",    note: "Christ redeemed us from the curse — we stand in covenant health" },
+    { nodeId: "p1",    note: "Bring nothing anxiously — bring everything by prayer and supplication" },
+    { nodeId: "h4",    note: "The prayer of faith shall save the sick — this is the covenant in action" },
+    { nodeId: "j1",    note: "Jesus was anointed to heal — it was His explicit assignment" },
+    { nodeId: "j3",    note: "Life more abundantly — healing is part of the fullness He came to give" },
+    { nodeId: "cross", note: "It is finished — every promise was sealed here at the cost of His blood" },
+  ],
 };
 
 // Cross-reference sources:

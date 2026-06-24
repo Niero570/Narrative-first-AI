@@ -182,3 +182,16 @@ export const OPACITY = {
   lineDim: 0.08,   // non-selected connection lines
   lineDefault: 0.22, // default unselected (nothing selected)
 };
+
+// Dove Journey Mode — the Holy Spirit moving through the Word
+export const DOVE = {
+  fill: "#F0F4FF",        // soft white-blue body
+  glow: "#A5B4FC",        // indigo aura
+  wingStroke: "#C7D2FE",  // wing edge highlight
+  size: 2.8,              // SVG units (100×100 viewBox)
+  trailCount: 6,          // fading particles left behind
+  trailColor: "#C4B5FD",  // violet trail
+  travelMs: 1200,         // ms to travel one edge
+  pauseMs: 2000,          // ms paused at each destination node
+  easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+};

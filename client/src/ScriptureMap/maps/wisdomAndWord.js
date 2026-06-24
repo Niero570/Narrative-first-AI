@@ -11,6 +11,18 @@ export const MAP_META = {
   verseCount: 22,
   description:
     "Biblical wisdom is not intelligence — it is alignment with God's revealed order. The Word of God is its foundation, the fear of the Lord is its beginning, and Christ Himself is its fullness. 'In whom are hidden all the treasures of wisdom and knowledge' (Colossians 2:3).",
+  journey: [
+    { nodeId: "w1",   note: "Trust in the Lord — not your own analysis. This is wisdom's first posture." },
+    { nodeId: "w4",   note: "The fear of the Lord is the beginning — everything else builds on this foundation" },
+    { nodeId: "w2",   note: "Knowledge of the Holy One is understanding — knowing Him is the curriculum" },
+    { nodeId: "i1",   note: "All scripture is profitable — this is not ancient history, it is living instruction" },
+    { nodeId: "i2",   note: "A lamp to your feet — it does not illuminate the whole road, just the next step" },
+    { nodeId: "m1",   note: "Meditate on it day and night — the Word transforms when you dwell in it" },
+    { nodeId: "m2",   note: "Like a tree planted by rivers — the one who meditates is rooted and fruitful" },
+    { nodeId: "p1",   note: "God inhabits the praises of His people — praise opens the atmosphere" },
+    { nodeId: "p3",   note: "Bless the Lord at all times — praise is not mood-dependent" },
+    { nodeId: "cross", note: "In Christ are hidden all the treasures of wisdom — He is the destination" },
+  ],
 };
 
 export const NODES = [

@@ -12,6 +12,23 @@ export const MAP_META = {
   verseCount: 24,
   description:
     "The prophets did not speak of vague spiritual ideals — they named specific events centuries before they occurred. The fulfillments in the New Testament are not coincidence or symbol: they are the proof that the God who wrote the ending of history wrote its beginning as well. All of it converges on Christ.",
+  journey: [
+    { nodeId: "p_virgin",       note: "Isaiah 7:14 — written 700 years before the birth" },
+    { nodeId: "f_virgin",       note: "Matthew 1:22-23 — behold the virgin shall conceive, fulfilled exactly" },
+    { nodeId: "p_bethlehem",    note: "Micah 5:2 — the specific town named 700 years prior" },
+    { nodeId: "f_bethlehem",    note: "Matthew 2:5-6 — out of Bethlehem shall come the Ruler" },
+    { nodeId: "p_triumphal",    note: "Zechariah 9:9 — thy King comes riding on a donkey" },
+    { nodeId: "f_triumphal",    note: "John 12:14-15 — He found a young donkey and sat on it" },
+    { nodeId: "p_betrayal",     note: "Zechariah 11:12-13 — thirty pieces of silver, thrown to the potter" },
+    { nodeId: "f_betrayal",     note: "Matthew 27:3-10 — Judas returned the silver; it bought the potter's field" },
+    { nodeId: "p_silence",      note: "Isaiah 53:7 — He opened not His mouth before His accusers" },
+    { nodeId: "f_silence",      note: "Matthew 27:12-14 — He answered not one word, to the governor's amazement" },
+    { nodeId: "p_lots",         note: "Psalm 22:18 — they part His garments and cast lots for His clothing" },
+    { nodeId: "f_lots",         note: "John 19:23-24 — the soldiers cast lots, that the scripture might be fulfilled" },
+    { nodeId: "p_resurrection", note: "Psalm 16:10 — thou wilt not leave my soul in sheol" },
+    { nodeId: "f_resurrection", note: "Acts 2:31-32 — David spoke of the resurrection of Christ" },
+    { nodeId: "cross",          note: "Luke 24:44 — all things must be fulfilled which were written in the Law, Prophets, and Psalms" },
+  ],
 };
 
 // EDGE TYPES:
